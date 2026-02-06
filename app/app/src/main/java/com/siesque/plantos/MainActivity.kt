@@ -57,7 +57,7 @@ fun MainScreen() {
             NavigationBar {
                 navItems.forEachIndexed { index, (label, icon) ->
                     NavigationBarItem(
-                        icon = { Icon(icon, contentDescription = label) },
+                        icon = { Icon(icon, label) },
                         label = { Text(label) },
                         selected = selectedItem == index,
                         onClick = { selectedItem = index }
@@ -88,20 +88,35 @@ fun MainScreen() {
 
 @Composable
 fun HomeContent(modifier: Modifier = Modifier) {
-    val mockData = arrayOf(
-        ModuleData(ModuleStatus.Idle, 40f),
-        ModuleData(ModuleStatus.Working, 20f),
-        ModuleData(ModuleStatus.Working, 30f),
-        ModuleData(ModuleStatus.Idle, 80f),
-        ModuleData(ModuleStatus.Paused, 10f),
+    val data = arrayOf(
+        arrayOf(
+            ModuleData(ModuleStatus.Idle, 40f),
+            ModuleData(ModuleStatus.Working, 20f),
+        ),
+        arrayOf(
+            ModuleData(ModuleStatus.Idle, 80f),
+            ModuleData(ModuleStatus.Paused, 10f),
+        )
     )
 
     Column(modifier = modifier) {
-        Heading(text = "Modules")
-        mockData.iterator().forEach { moduleData ->
+        data.iterator().forEach { modules ->
+            HubSection(modules = modules, index = data.indexOf(modules))
+        }
+    }
+}
+
+@Composable
+fun HubSection(modules: Array<ModuleData>, index: Int) {
+    Column {
+        Heading(
+            text = "Hub ${intToRoman(index + 1)}",
+            modifier = Modifier.padding(vertical = 4.dp)
+        )
+        modules.iterator().forEach { moduleData ->
             ModuleCard(
                 moduleData = moduleData,
-                index = mockData.indexOf(moduleData),
+                index = modules.indexOf(moduleData),
                 onClick = {}
             )
         }

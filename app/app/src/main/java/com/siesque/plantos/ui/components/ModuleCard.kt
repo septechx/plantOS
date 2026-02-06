@@ -14,27 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.siesque.plantos.intToRoman
 import com.siesque.plantos.types.ModuleData
 import com.siesque.plantos.types.ModuleStatus
-
-private fun intToRoman(num: Int): String {
-    if (num <= 0) return ""
-    
-    val values = intArrayOf(1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1)
-    val symbols = arrayOf("M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I")
-    
-    val sb = StringBuilder()
-    var remaining = num
-    
-    for (i in values.indices) {
-        while (remaining >= values[i]) {
-            sb.append(symbols[i])
-            remaining -= values[i]
-        }
-    }
-    
-    return sb.toString()
-}
 
 private fun getHumidityColor(humidity: Float): Color {
     return when {
@@ -87,6 +69,21 @@ fun ModuleCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
+                    text = "Humidity:",
+                    fontWeight = FontWeight.Bold
+                )
+
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .border(
+                            width = 2.dp,
+                            color = getHumidityColor(moduleData.humidity),
+                            shape = CircleShape
+                        )
+                )
+
+                Text(
                     text = "Status:",
                     fontWeight = FontWeight.Bold
                 )
@@ -97,21 +94,6 @@ fun ModuleCard(
                         .border(
                             width = 2.dp,
                             color = getStatusColor(moduleData.status),
-                            shape = CircleShape
-                        )
-                )
-
-                Text(
-                    text = "Humidity:",
-                    fontWeight = FontWeight.Bold
-                )
-                
-                Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .border(
-                            width = 2.dp,
-                            color = getHumidityColor(moduleData.humidity),
                             shape = CircleShape
                         )
                 )
