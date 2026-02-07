@@ -1,4 +1,4 @@
-package com.siesque.plantos.ui.statistics
+package com.siesque.plantos.ui.screens
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -16,9 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -28,9 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material.icons.filled.Grass
-import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.ViewStream
 import androidx.compose.material.icons.filled.WaterDrop
@@ -57,7 +52,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -86,16 +80,14 @@ fun StatisticsScreen(modifier: Modifier = Modifier) {
 
         Box(modifier = Modifier.weight(1f)) {
             when (selectedDesign) {
-                DesignType.GRID -> GridStats(mockStatistics)
                 DesignType.GRAPH -> GraphStats(mockStatistics)
-                DesignType.RETRO -> RetroStats(mockStatistics)
                 DesignType.LIST -> ListStats(mockStatistics)
             }
         }
     }
 }
 
-enum class DesignType { LIST, GRID, GRAPH, RETRO  }
+enum class DesignType { LIST, GRAPH }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,9 +109,7 @@ fun DesignSelector(
                     SegmentedButtonDefaults.Icon(active = currentDesign == design) {
                         Icon(
                             imageVector = when (design) {
-                                DesignType.GRID -> Icons.Default.GridView
                                 DesignType.GRAPH -> Icons.AutoMirrored.Filled.ShowChart
-                                DesignType.RETRO -> Icons.Default.Terminal
                                 DesignType.LIST -> Icons.Default.ViewStream
                             },
                             contentDescription = design.name,
@@ -130,60 +120,11 @@ fun DesignSelector(
                 label = {
                     Text(
                         text = design.name.lowercase().replaceFirstChar { it.uppercase() },
-                        style = MaterialTheme.typography.labelSmall
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             )
-        }
-    }
-}
-
-@Composable
-fun GridStats(stats: List<Statistic>) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        items(stats) { stat ->
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = stat.type.color.copy(alpha = 0.1f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        imageVector = getIconForType(stat.type),
-                        contentDescription = null,
-                        tint = stat.type.color,
-                        modifier = Modifier.size(32.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = stat.value.toString(),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = stat.type.color
-                    )
-                    Text(
-                        text = stat.type.unit,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stat.label,
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1
-                    )
-                }
-            }
         }
     }
 }
@@ -245,58 +186,6 @@ fun GraphStats(stats: List<Statistic>) {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun RetroStats(stats: List<Statistic>) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        Text(
-            text = "> SYSTEM STATUS_CHECK...",
-            color = Color.Green,
-            fontFamily = FontFamily.Monospace,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        
-        stats.forEach { stat ->
-            Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                Text(
-                    text = "[${stat.type.name}] :: ${stat.label}",
-                    color = Color.Green,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 12.sp
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "VAL: ${stat.value}${stat.type.unit}",
-                        color = Color.Green,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.width(100.dp)
-                    )
-                    val barLength = (stat.value % 10).toInt() + 1
-                    Text(
-                        text = "|".repeat(barLength),
-                        color = Color.Green,
-                        fontFamily = FontFamily.Monospace
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-        
-        Text(
-            text = "> END OF STREAM_",
-            color = Color.Green,
-            fontFamily = FontFamily.Monospace,
-            modifier = Modifier.padding(top = 16.dp)
-        )
     }
 }
 

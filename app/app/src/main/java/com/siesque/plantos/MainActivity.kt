@@ -23,13 +23,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.siesque.plantos.types.Module
-import com.siesque.plantos.types.ModuleStatus
 import com.siesque.plantos.ui.components.Heading
-import com.siesque.plantos.ui.components.ModuleCard
-import com.siesque.plantos.ui.statistics.HomeScreen
+import com.siesque.plantos.ui.screens.HomeScreen
 import com.siesque.plantos.ui.theme.PlantOSTheme
-import com.siesque.plantos.ui.statistics.StatisticsScreen
+import com.siesque.plantos.ui.screens.StatisticsScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
