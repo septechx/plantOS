@@ -5,3 +5,8 @@ enum class ModuleStatus {
     Working,
     Paused
 }
+
+data class Module(
+    val status: ModuleStatus,
+    val humidity: Float
+)

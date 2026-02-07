@@ -23,11 +23,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.siesque.plantos.types.ModuleData
+import com.siesque.plantos.types.Module
 import com.siesque.plantos.types.ModuleStatus
 import com.siesque.plantos.ui.components.Heading
 import com.siesque.plantos.ui.components.ModuleCard
+import com.siesque.plantos.ui.statistics.HomeScreen
 import com.siesque.plantos.ui.theme.PlantOSTheme
+import com.siesque.plantos.ui.statistics.StatisticsScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,39 +90,7 @@ fun MainScreen() {
 
 @Composable
 fun HomeContent(modifier: Modifier = Modifier) {
-    val data = arrayOf(
-        arrayOf(
-            ModuleData(ModuleStatus.Idle, 40f),
-            ModuleData(ModuleStatus.Working, 20f),
-        ),
-        arrayOf(
-            ModuleData(ModuleStatus.Idle, 80f),
-            ModuleData(ModuleStatus.Paused, 10f),
-        )
-    )
-
-    Column(modifier = modifier) {
-        data.iterator().forEach { modules ->
-            HubSection(modules = modules, index = data.indexOf(modules))
-        }
-    }
-}
-
-@Composable
-fun HubSection(modules: Array<ModuleData>, index: Int) {
-    Column {
-        Heading(
-            text = "Hub ${intToRoman(index + 1)}",
-            modifier = Modifier.padding(vertical = 4.dp)
-        )
-        modules.iterator().forEach { moduleData ->
-            ModuleCard(
-                moduleData = moduleData,
-                index = modules.indexOf(moduleData),
-                onClick = {}
-            )
-        }
-    }
+    HomeScreen(modifier = modifier)
 }
 
 @Composable
@@ -133,8 +103,5 @@ fun SettingsContent(modifier: Modifier = Modifier) {
 
 @Composable
 fun StatisticsContent(modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        Heading(text = "Statistics")
-        // TODO: Add statistics here
-    }
+    StatisticsScreen(modifier = modifier)
 }

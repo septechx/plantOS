@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.siesque.plantos.intToRoman
-import com.siesque.plantos.types.ModuleData
+import com.siesque.plantos.types.Module
 import com.siesque.plantos.types.ModuleStatus
 
 private fun getHumidityColor(humidity: Float): Color {
@@ -36,7 +36,7 @@ private fun getStatusColor(status: ModuleStatus): Color {
 
 @Composable
 fun ModuleCard(
-    moduleData: ModuleData,
+    moduleData: Module,
     index: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
