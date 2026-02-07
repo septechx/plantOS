@@ -41,6 +41,7 @@ fun ModuleCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // TODO: Try using ElevatedCard
     Card(
         modifier = modifier
             .fillMaxWidth()

@@ -36,9 +36,12 @@ import androidx.compose.material.icons.filled.ViewStream
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -94,37 +97,43 @@ fun StatisticsScreen(modifier: Modifier = Modifier) {
 
 enum class DesignType { LIST, GRID, GRAPH, RETRO  }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DesignSelector(
     currentDesign: DesignType,
     onDesignSelected: (DesignType) -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
+    SingleChoiceSegmentedButtonRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
     ) {
-        DesignType.entries.forEach { design ->
-            IconButton(
+        DesignType.entries.forEachIndexed { index, design ->
+            SegmentedButton(
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = DesignType.entries.size),
                 onClick = { onDesignSelected(design) },
-                modifier = Modifier
-                    .background(
-                        if (currentDesign == design) MaterialTheme.colorScheme.primaryContainer
-                        else Color.Transparent,
-                        shape = CircleShape
+                selected = currentDesign == design,
+                icon = {
+                    SegmentedButtonDefaults.Icon(active = currentDesign == design) {
+                        Icon(
+                            imageVector = when (design) {
+                                DesignType.GRID -> Icons.Default.GridView
+                                DesignType.GRAPH -> Icons.AutoMirrored.Filled.ShowChart
+                                DesignType.RETRO -> Icons.Default.Terminal
+                                DesignType.LIST -> Icons.Default.ViewStream
+                            },
+                            contentDescription = design.name,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                },
+                label = {
+                    Text(
+                        text = design.name.lowercase().replaceFirstChar { it.uppercase() },
+                        style = MaterialTheme.typography.labelSmall
                     )
-            ) {
-                Icon(
-                    imageVector = when (design) {
-                        DesignType.GRID -> Icons.Default.GridView
-                        DesignType.GRAPH -> Icons.AutoMirrored.Filled.ShowChart
-                        DesignType.RETRO -> Icons.Default.Terminal
-                        DesignType.LIST -> Icons.Default.ViewStream
-                    },
-                    contentDescription = design.name,
-                    tint = if (currentDesign == design) MaterialTheme.colorScheme.onPrimaryContainer
-                    else MaterialTheme.colorScheme.onSurface
-                )
-            }
+                }
+            )
         }
     }
 }
