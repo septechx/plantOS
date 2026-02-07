@@ -1,8 +1,15 @@
 package com.siesque.plantos.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +31,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.BatteryFull
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Grass
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Thermostat
@@ -38,14 +46,17 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -63,8 +74,29 @@ import com.siesque.plantos.types.ZoneNode
 @Composable
 fun StatisticsScreen(modifier: Modifier = Modifier) {
     var selectedDesign by remember { mutableStateOf(DesignType.LIST) }
+    val expandedZones = remember { mutableStateMapOf<ZoneNode, Boolean>() }
 
+    MockData.nodes.forEach { node ->
+        if (!expandedZones.containsKey(node)) {
+            expandedZones[node] = true
+        }
+    }
 
+    fun toggleZone(node: ZoneNode) {
+        expandedZones[node] = !(expandedZones[node] ?: true)
+    }
+
+    fun expandAll() {
+        MockData.nodes.forEach { node ->
+            expandedZones[node] = true
+        }
+    }
+
+    fun collapseAll() {
+        MockData.nodes.forEach { node ->
+            expandedZones[node] = false
+        }
+    }
 
     Column(modifier = modifier.fillMaxSize()) {
         DesignSelector(
@@ -74,16 +106,124 @@ fun StatisticsScreen(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        GlobalControls(
+            onExpandAll = { expandAll() },
+            onCollapseAll = { collapseAll() }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         Box(modifier = Modifier.weight(1f)) {
             when (selectedDesign) {
-                DesignType.GRAPH -> GraphStats(MockData.nodes)
-                DesignType.LIST -> ListStats(MockData.nodes)
+                DesignType.GRAPH -> GraphStats(
+                    nodes = MockData.nodes,
+                    expandedZones = expandedZones,
+                    onToggleZone = { toggleZone(it) }
+                )
+                DesignType.LIST -> ListStats(
+                    nodes = MockData.nodes,
+                    expandedZones = expandedZones,
+                    onToggleZone = { toggleZone(it) }
+                )
             }
         }
     }
 }
 
 enum class DesignType { LIST, GRAPH }
+
+@Composable
+fun GlobalControls(
+    onExpandAll: () -> Unit,
+    onCollapseAll: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        TextButton(onClick = onExpandAll) {
+            Text(
+                text = "Expand All",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        TextButton(onClick = onCollapseAll) {
+            Text(
+                text = "Collapse All",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+@Composable
+fun ZoneHeader(
+    node: ZoneNode,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val rotation by animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f,
+        label = "expand_icon_rotation"
+    )
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onToggle() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            MaterialTheme.colorScheme.secondaryContainer,
+                            RoundedCornerShape(10.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("🌿", style = MaterialTheme.typography.titleMedium)
+                }
+
+                Text(
+                    text = node.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Icon(
+                imageVector = Icons.Default.ExpandMore,
+                contentDescription = if (isExpanded) "Collapse" else "Expand",
+                modifier = Modifier.rotate(rotation),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -126,62 +266,42 @@ fun DesignSelector(
 }
 
 @Composable
-fun GraphStats(nodes: List<ZoneNode>) {
-    val stats = nodes.flatMap { item ->
-        item.statistics.map { statistic ->
-            statistic to item.name
-        }
-    }
-
+fun GraphStats(
+    nodes: List<ZoneNode>,
+    expandedZones: Map<ZoneNode, Boolean>,
+    onToggleZone: (ZoneNode) -> Unit
+) {
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        stats.forEach { stat ->
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        nodes.forEach { node ->
+            val isExpanded = expandedZones[node] ?: true
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                ZoneHeader(
+                    node = node,
+                    isExpanded = isExpanded,
+                    onToggle = { onToggleZone(node) }
+                )
+
+                AnimatedVisibility(
+                    visible = isExpanded,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.padding(top = 4.dp)
                     ) {
-                        Text(text = stat.second, style = MaterialTheme.typography.titleSmall)
-                        Text(
-                            text = "${stat.first.history.last()} ${stat.first.type.unit}",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = stat.first.type.color
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Canvas(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                    ) {
-                        val points = stat.first.history
-                        if (points.isNotEmpty()) {
-                            val max = points.maxOrNull() ?: 100f
-                            val min = points.minOrNull() ?: 0f
-                            val range = if (max - min == 0f) 1f else max - min
-                            
-                            val path = Path()
-                            val widthPerPoint = size.width / (points.size - 1)
-                            
-                            points.forEachIndexed { index, value ->
-                                val x = index * widthPerPoint
-                                val y = size.height - ((value - min) / range * size.height)
-                                if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
-                            }
-                            
-                            drawPath(
-                                path = path,
-                                color = stat.first.type.color,
-                                style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)
+                        node.statistics.forEach { statistic ->
+                            GraphStatCard(
+                                statistic = statistic,
+                                zoneName = node.name
                             )
                         }
                     }
@@ -192,79 +312,167 @@ fun GraphStats(nodes: List<ZoneNode>) {
 }
 
 @Composable
-fun ListStats(nodes: List<ZoneNode>) {
-    val stats = nodes.flatMap { item ->
-        item.statistics.map { statistic ->
-            statistic to item.name
-        }
-    }
-
-    LazyColumn(
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+private fun GraphStatCard(
+    statistic: Statistic,
+    zoneName: String
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        items(stats) { stat ->
-            Box(
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = zoneName, style = MaterialTheme.typography.titleSmall)
+                Text(
+                    text = "${statistic.history.last()} ${statistic.type.unit}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = statistic.type.color
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
-                    .clip(RoundedCornerShape(topStart = 24.dp, bottomEnd = 24.dp))
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                stat.first.type.color.copy(alpha = 0.2f),
-                                stat.first.type.color.copy(alpha = 0.05f)
-                            )
-                        )
-                    )
+                    .height(100.dp)
             ) {
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    drawCircle(
-                        color = stat.first.type.color.copy(alpha = 0.1f),
-                        radius = size.height * 0.8f,
-                        center = Offset(size.width * 0.9f, size.height * 0.9f)
+                val points = statistic.history
+                if (points.isNotEmpty()) {
+                    val max = points.maxOrNull() ?: 100f
+                    val min = points.minOrNull() ?: 0f
+                    val range = if (max - min == 0f) 1f else max - min
+
+                    val path = Path()
+                    val widthPerPoint = size.width / (points.size - 1)
+
+                    points.forEachIndexed { index, value ->
+                        val x = index * widthPerPoint
+                        val y = size.height - ((value - min) / range * size.height)
+                        if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                    }
+
+                    drawPath(
+                        path = path,
+                        color = statistic.type.color,
+                        style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)
                     )
                 }
-                
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            }
+        }
+    }
+}
+
+@Composable
+fun ListStats(
+    nodes: List<ZoneNode>,
+    expandedZones: Map<ZoneNode, Boolean>,
+    onToggleZone: (ZoneNode) -> Unit
+) {
+    LazyColumn(
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(nodes, key = { it.id }) { node ->
+            val isExpanded = expandedZones[node] ?: true
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ZoneHeader(
+                    node = node,
+                    isExpanded = isExpanded,
+                    onToggle = { onToggleZone(node) }
+                )
+
+                AnimatedVisibility(
+                    visible = isExpanded,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(50.dp)
-                            .clip(CircleShape)
-                            .background(Color.White)
-                            .border(2.dp, stat.first.type.color.copy(alpha = 0.3f), CircleShape),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.padding(top = 4.dp)
                     ) {
-                        Icon(
-                            imageVector = getIconForType(stat.first.type),
-                            contentDescription = null,
-                            tint = stat.first.type.color
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.width(16.dp))
-                    
-                    Column {
-                        Text(
-                            text = stat.second,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "${stat.first.history.last()} ${stat.first.type.unit}",
-                            style = MaterialTheme.typography.displaySmall,
-                            fontSize = 24.sp,
-                            color = stat.first.type.color
-                        )
+                        node.statistics.forEach { statistic ->
+                            StatCard(
+                                statistic = statistic,
+                                zoneName = node.name
+                            )
+                        }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatCard(
+    statistic: Statistic,
+    zoneName: String
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(120.dp)
+            .clip(RoundedCornerShape(topStart = 24.dp, bottomEnd = 24.dp))
+            .background(
+                brush = Brush.horizontalGradient(
+                    colors = listOf(
+                        statistic.type.color.copy(alpha = 0.2f),
+                        statistic.type.color.copy(alpha = 0.05f)
+                    )
+                )
+            )
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawCircle(
+                color = statistic.type.color.copy(alpha = 0.1f),
+                radius = size.height * 0.8f,
+                center = Offset(size.width * 0.9f, size.height * 0.9f)
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(50.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .border(2.dp, statistic.type.color.copy(alpha = 0.3f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = getIconForType(statistic.type),
+                    contentDescription = null,
+                    tint = statistic.type.color
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column {
+                Text(
+                    text = zoneName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "${statistic.history.last()} ${statistic.type.unit}",
+                    style = MaterialTheme.typography.displaySmall,
+                    fontSize = 24.sp,
+                    color = statistic.type.color
+                )
             }
         }
     }
