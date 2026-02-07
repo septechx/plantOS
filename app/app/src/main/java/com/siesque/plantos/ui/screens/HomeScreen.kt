@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.siesque.plantos.Utils
 import com.siesque.plantos.data.MockData
 import com.siesque.plantos.types.ZoneNode
 import com.siesque.plantos.types.StatType
@@ -89,7 +90,7 @@ fun ZoneCard(node: ZoneNode) {
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Watered: ${node.lastWatered}",
+                    text = "Watered: ${Utils.formatRelativeTime(node.lastWatered)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.secondary
                 )

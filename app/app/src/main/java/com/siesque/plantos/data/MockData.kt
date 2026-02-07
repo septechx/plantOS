@@ -4,6 +4,8 @@ import com.siesque.plantos.types.ZoneNode
 import com.siesque.plantos.types.ZoneStatus
 import com.siesque.plantos.types.Statistic
 import com.siesque.plantos.types.StatType
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 object MockData {
     val nodes = listOf(
@@ -12,7 +14,7 @@ object MockData {
             id = 0,
             name = "Monstera Deliciosa",
             status = ZoneStatus.Idle,
-            lastWatered = "2 days ago",
+            lastWatered = Instant.now().minus(2, ChronoUnit.DAYS),
             statistics = listOf(
                 Statistic(1, StatType.TEMPERATURE, listOf(21f, 22f, 22.5f, 23f, 22.5f, 22f, 21.5f)),
                 Statistic(2, StatType.HUMIDITY, listOf(40f, 42f, 45f, 48f, 50f, 45f, 43f)),
@@ -25,7 +27,7 @@ object MockData {
             id = 1,
             name = "Fiddle Leaf Fig",
             status = ZoneStatus.Working,
-            lastWatered = "Today",
+            lastWatered = Instant.now(),
             statistics = listOf(
                 Statistic(5, StatType.TEMPERATURE, listOf(22f, 23f, 24f, 24.5f, 24f, 23.5f, 23f)),
                 Statistic(6, StatType.HUMIDITY, listOf(55f, 58f, 60f, 62f, 65f, 60f, 58f)),
@@ -38,7 +40,7 @@ object MockData {
             id = 2,
             name = "Snake Plant",
             status = ZoneStatus.Idle,
-            lastWatered = "1 week ago",
+            lastWatered = Instant.now().minus(7, ChronoUnit.DAYS),
             statistics = listOf(
                 Statistic(9, StatType.TEMPERATURE, listOf(20f, 20.5f, 21f, 21.5f, 21f, 20.5f, 20f)),
                 Statistic(10, StatType.HUMIDITY, listOf(25f, 28f, 30f, 32f, 35f, 30f, 28f)),
@@ -51,7 +53,7 @@ object MockData {
             id = 3,
             name = "Peace Lily",
             status = ZoneStatus.Paused,
-            lastWatered = "Yesterday",
+            lastWatered = Instant.now().minus(1, ChronoUnit.DAYS),
             statistics = listOf(
                 Statistic(13, StatType.TEMPERATURE, listOf(22f, 22.5f, 23f, 24f, 23.5f, 23f, 22.5f)),
                 Statistic(14, StatType.HUMIDITY, listOf(70f, 72f, 75f, 78f, 80f, 75f, 73f)),
@@ -64,7 +66,7 @@ object MockData {
             id = 4,
             name = "Aloe Vera",
             status = ZoneStatus.Idle,
-            lastWatered = "5 days ago",
+            lastWatered = Instant.now().minus(5, ChronoUnit.DAYS),
             statistics = listOf(
                 Statistic(17, StatType.TEMPERATURE, listOf(23f, 24f, 25f, 26f, 25f, 24.5f, 24f)),
                 Statistic(18, StatType.HUMIDITY, listOf(30f, 32f, 35f, 38f, 40f, 35f, 33f)),
