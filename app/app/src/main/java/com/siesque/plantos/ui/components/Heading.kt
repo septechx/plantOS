@@ -11,13 +11,13 @@ import androidx.compose.ui.text.font.FontWeight
 fun Heading(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.onBackground
+    color: Color = MaterialTheme.colorScheme.primary,
 ) {
     Text(
         text = text,
         modifier = modifier,
         style = MaterialTheme.typography.headlineLarge,
         color = color,
-        fontWeight = FontWeight.Bold
+        fontWeight = FontWeight.ExtraBold
     )
 }

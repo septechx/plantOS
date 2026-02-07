@@ -31,6 +31,7 @@ import com.siesque.plantos.Utils
 import com.siesque.plantos.data.MockData
 import com.siesque.plantos.types.ZoneNode
 import com.siesque.plantos.types.StatType
+import com.siesque.plantos.ui.components.Heading
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
@@ -40,11 +41,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
-        Text(
+        Heading(
             text = "My Garden",
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 

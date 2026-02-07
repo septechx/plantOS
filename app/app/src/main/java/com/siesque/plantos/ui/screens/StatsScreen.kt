@@ -70,6 +70,7 @@ import com.siesque.plantos.data.MockData
 import com.siesque.plantos.types.StatType
 import com.siesque.plantos.types.Statistic
 import com.siesque.plantos.types.ZoneNode
+import com.siesque.plantos.ui.components.Heading
 
 @Composable
 fun StatisticsScreen(modifier: Modifier = Modifier) {
@@ -98,20 +99,21 @@ fun StatisticsScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+        Heading(
+            text = "Statistics",
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
         DesignSelector(
             currentDesign = selectedDesign,
             onDesignSelected = { selectedDesign = it }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
         GlobalControls(
             onExpandAll = { expandAll() },
             onCollapseAll = { collapseAll() }
         )
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         Box(modifier = Modifier.weight(1f)) {
             when (selectedDesign) {

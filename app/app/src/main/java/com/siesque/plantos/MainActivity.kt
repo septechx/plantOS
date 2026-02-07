@@ -92,8 +92,15 @@ fun HomeContent(modifier: Modifier = Modifier) {
 
 @Composable
 fun SettingsContent(modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        Heading(text = "Settings")
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Heading(
+            text = "Settings",
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
         // TODO: Add settings options here
     }
 }
