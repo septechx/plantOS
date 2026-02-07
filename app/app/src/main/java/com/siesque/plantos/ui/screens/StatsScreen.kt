@@ -30,7 +30,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
-import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Grass
 import androidx.compose.material.icons.filled.LightMode
@@ -486,5 +485,4 @@ fun getIconForType(type: StatType) = when (type) {
     StatType.HUMIDITY -> Icons.Default.WaterDrop
     StatType.LIGHT -> Icons.Default.LightMode
     StatType.SOIL_MOISTURE -> Icons.Default.Grass
-    StatType.BATTERY -> Icons.Default.BatteryFull
 }
