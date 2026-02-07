@@ -28,7 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.siesque.plantos.data.MockData
-import com.siesque.plantos.types.Module
+import com.siesque.plantos.types.ZoneNode
+import com.siesque.plantos.types.StatType
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
@@ -50,15 +51,15 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            items(MockData.modules) { module ->
-                ModuleCard(module = module)
+            items(MockData.nodes) { module ->
+                ZoneCard(node = module)
             }
         }
     }
 }
 
 @Composable
-fun ModuleCard(module: Module) {
+fun ZoneCard(node: ZoneNode) {
     Card(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -82,31 +83,34 @@ fun ModuleCard(module: Module) {
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = module.name,
+                    text = node.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Watered: ${module.lastWatered}",
+                    text = "Watered: ${node.lastWatered}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.secondary
                 )
             }
 
             Column(horizontalAlignment = Alignment.End) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.WaterDrop,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.tertiary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = "${module.humidity.toInt()}%",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
+                val humidityStat = node.statistics.find { it.type == StatType.HUMIDITY }
+                humidityStat?.let {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.WaterDrop,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.tertiary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "${it.history.last().toInt()}%",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
                 }
             }
         }

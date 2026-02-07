@@ -13,7 +13,5 @@ enum class StatType(val unit: String, val iconRes: String, val color: Color) {
 data class Statistic(
     val id: Int,
     val type: StatType,
-    val label: String,
-    val value: Float,
-    val history: List<Float> // Mock history for graphs
+    val history: List<Float>
 )

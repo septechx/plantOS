@@ -55,20 +55,16 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.siesque.plantos.data.MockData
 import com.siesque.plantos.types.StatType
 import com.siesque.plantos.types.Statistic
+import com.siesque.plantos.types.ZoneNode
 
 @Composable
 fun StatisticsScreen(modifier: Modifier = Modifier) {
     var selectedDesign by remember { mutableStateOf(DesignType.LIST) }
 
-    val mockStatistics = listOf(
-        Statistic(1, StatType.TEMPERATURE, "Greenhouse 1", 24.5f, listOf(22f, 23f, 24f, 25f, 24.5f, 23f, 22f)),
-        Statistic(2, StatType.HUMIDITY, "Greenhouse 1", 65f, listOf(60f, 62f, 65f, 68f, 70f, 65f, 64f)),
-        Statistic(3, StatType.LIGHT, "Main Garden", 850f, listOf(200f, 400f, 600f, 800f, 900f, 850f, 500f)),
-        Statistic(4, StatType.SOIL_MOISTURE, "Tomato Bed", 42f, listOf(50f, 48f, 45f, 42f, 40f, 38f, 35f)),
-        Statistic(5, StatType.BATTERY, "Sensor Node A", 88f, listOf(95f, 94f, 92f, 90f, 89f, 88f, 87f))
-    )
+
 
     Column(modifier = modifier.fillMaxSize()) {
         DesignSelector(
@@ -80,8 +76,8 @@ fun StatisticsScreen(modifier: Modifier = Modifier) {
 
         Box(modifier = Modifier.weight(1f)) {
             when (selectedDesign) {
-                DesignType.GRAPH -> GraphStats(mockStatistics)
-                DesignType.LIST -> ListStats(mockStatistics)
+                DesignType.GRAPH -> GraphStats(MockData.nodes)
+                DesignType.LIST -> ListStats(MockData.nodes)
             }
         }
     }
@@ -130,7 +126,13 @@ fun DesignSelector(
 }
 
 @Composable
-fun GraphStats(stats: List<Statistic>) {
+fun GraphStats(nodes: List<ZoneNode>) {
+    val stats = nodes.flatMap { item ->
+        item.statistics.map { statistic ->
+            statistic to item.name
+        }
+    }
+
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
@@ -147,12 +149,12 @@ fun GraphStats(stats: List<Statistic>) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(text = stat.label, style = MaterialTheme.typography.titleSmall)
+                        Text(text = stat.second, style = MaterialTheme.typography.titleSmall)
                         Text(
-                            text = "${stat.value} ${stat.type.unit}",
+                            text = "${stat.first.history.last()} ${stat.first.type.unit}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = stat.type.color
+                            color = stat.first.type.color
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
@@ -161,7 +163,7 @@ fun GraphStats(stats: List<Statistic>) {
                             .fillMaxWidth()
                             .height(100.dp)
                     ) {
-                        val points = stat.history
+                        val points = stat.first.history
                         if (points.isNotEmpty()) {
                             val max = points.maxOrNull() ?: 100f
                             val min = points.minOrNull() ?: 0f
@@ -178,7 +180,7 @@ fun GraphStats(stats: List<Statistic>) {
                             
                             drawPath(
                                 path = path,
-                                color = stat.type.color,
+                                color = stat.first.type.color,
                                 style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)
                             )
                         }
@@ -190,7 +192,13 @@ fun GraphStats(stats: List<Statistic>) {
 }
 
 @Composable
-fun ListStats(stats: List<Statistic>) {
+fun ListStats(nodes: List<ZoneNode>) {
+    val stats = nodes.flatMap { item ->
+        item.statistics.map { statistic ->
+            statistic to item.name
+        }
+    }
+
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -204,15 +212,15 @@ fun ListStats(stats: List<Statistic>) {
                     .background(
                         brush = Brush.horizontalGradient(
                             colors = listOf(
-                                stat.type.color.copy(alpha = 0.2f),
-                                stat.type.color.copy(alpha = 0.05f)
+                                stat.first.type.color.copy(alpha = 0.2f),
+                                stat.first.type.color.copy(alpha = 0.05f)
                             )
                         )
                     )
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     drawCircle(
-                        color = stat.type.color.copy(alpha = 0.1f),
+                        color = stat.first.type.color.copy(alpha = 0.1f),
                         radius = size.height * 0.8f,
                         center = Offset(size.width * 0.9f, size.height * 0.9f)
                     )
@@ -229,13 +237,13 @@ fun ListStats(stats: List<Statistic>) {
                             .size(50.dp)
                             .clip(CircleShape)
                             .background(Color.White)
-                            .border(2.dp, stat.type.color.copy(alpha = 0.3f), CircleShape),
+                            .border(2.dp, stat.first.type.color.copy(alpha = 0.3f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = getIconForType(stat.type),
+                            imageVector = getIconForType(stat.first.type),
                             contentDescription = null,
-                            tint = stat.type.color
+                            tint = stat.first.type.color
                         )
                     }
                     
@@ -243,17 +251,17 @@ fun ListStats(stats: List<Statistic>) {
                     
                     Column {
                         Text(
-                            text = stat.label,
+                            text = stat.second,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "${stat.value} ${stat.type.unit}",
+                            text = "${stat.first.history.last()} ${stat.first.type.unit}",
                             style = MaterialTheme.typography.displaySmall,
                             fontSize = 24.sp,
-                            color = stat.type.color
+                            color = stat.first.type.color
                         )
                     }
                 }
