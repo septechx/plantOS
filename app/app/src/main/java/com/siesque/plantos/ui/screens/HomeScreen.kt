@@ -25,13 +25,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.siesque.plantos.Utils
 import com.siesque.plantos.data.MockData
 import com.siesque.plantos.types.ZoneNode
 import com.siesque.plantos.types.StatType
 import com.siesque.plantos.ui.components.Heading
+import com.siesque.plantos.ui.theme.PlantOSTheme
+import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
@@ -72,10 +73,16 @@ fun ZoneCard(node: ZoneNode) {
             Box(
                 modifier = Modifier
                     .size(50.dp)
-                    .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(12.dp)),
+                    .background(
+                        MaterialTheme.colorScheme.secondaryContainer,
+                        RoundedCornerShape(12.dp)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
-                Text("🌿", style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    text = node.icon,
+                    style = MaterialTheme.typography.headlineMedium
+                )
             }
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -84,7 +91,6 @@ fun ZoneCard(node: ZoneNode) {
                 Text(
                     text = node.name,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
@@ -100,7 +106,7 @@ fun ZoneCard(node: ZoneNode) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.WaterDrop,
-                            contentDescription = null,
+                            contentDescription = "Humidity indicator",
                             tint = MaterialTheme.colorScheme.tertiary,
                             modifier = Modifier.size(16.dp)
                         )
@@ -113,5 +119,21 @@ fun ZoneCard(node: ZoneNode) {
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HomeScreenPreview() {
+    PlantOSTheme {
+        HomeScreen()
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ZoneCardPreview() {
+    PlantOSTheme {
+        ZoneCard(node = MockData.nodes.first())
     }
 }

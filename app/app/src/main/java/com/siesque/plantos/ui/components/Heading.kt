@@ -5,8 +5,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-
 @Composable
 fun Heading(
     text: String,
@@ -17,7 +15,6 @@ fun Heading(
         text = text,
         modifier = modifier,
         style = MaterialTheme.typography.headlineLarge,
-        color = color,
-        fontWeight = FontWeight.ExtraBold
+        color = color
     )
 }

@@ -62,7 +62,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.siesque.plantos.data.MockData
@@ -70,6 +69,8 @@ import com.siesque.plantos.types.StatType
 import com.siesque.plantos.types.Statistic
 import com.siesque.plantos.types.ZoneNode
 import com.siesque.plantos.ui.components.Heading
+import com.siesque.plantos.ui.theme.PlantOSTheme
+import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun StatisticsScreen(modifier: Modifier = Modifier) {
@@ -98,7 +99,10 @@ fun StatisticsScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+    Column(modifier = modifier
+        .fillMaxSize()
+        .padding(16.dp)
+    ) {
         Heading(
             text = "Statistics",
             modifier = Modifier.padding(bottom = 16.dp)
@@ -121,6 +125,7 @@ fun StatisticsScreen(modifier: Modifier = Modifier) {
                     expandedZones = expandedZones,
                     onToggleZone = { toggleZone(it) }
                 )
+
                 DesignType.LIST -> ListStats(
                     nodes = MockData.nodes,
                     expandedZones = expandedZones,
@@ -205,13 +210,12 @@ fun ZoneHeader(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("🌿", style = MaterialTheme.typography.titleMedium)
+                    Text(node.icon, style = MaterialTheme.typography.titleMedium)
                 }
 
                 Text(
                     text = node.name,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -239,7 +243,10 @@ fun DesignSelector(
     ) {
         DesignType.entries.forEachIndexed { index, design ->
             SegmentedButton(
-                shape = SegmentedButtonDefaults.itemShape(index = index, count = DesignType.entries.size),
+                shape = SegmentedButtonDefaults.itemShape(
+                    index = index,
+                    count = DesignType.entries.size
+                ),
                 onClick = { onDesignSelected(design) },
                 selected = currentDesign == design,
                 icon = {
@@ -257,8 +264,7 @@ fun DesignSelector(
                 label = {
                     Text(
                         text = design.name.lowercase().replaceFirstChar { it.uppercase() },
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.labelLarge
                     )
                 }
             )
@@ -330,7 +336,6 @@ private fun GraphStatCard(
                 Text(
                     text = "${statistic.history.last()} ${statistic.type.unit}",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
                     color = statistic.type.color
                 )
             }
@@ -453,7 +458,7 @@ private fun StatCard(
             ) {
                 Icon(
                     imageVector = getIconForType(statistic.type),
-                    contentDescription = null,
+                    contentDescription = "${statistic.type.name} icon",
                     tint = statistic.type.color
                 )
             }
@@ -464,7 +469,6 @@ private fun StatCard(
                 Text(
                     text = zoneName,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
@@ -485,4 +489,35 @@ fun getIconForType(type: StatType) = when (type) {
     StatType.HUMIDITY -> Icons.Default.WaterDrop
     StatType.LIGHT -> Icons.Default.LightMode
     StatType.SOIL_MOISTURE -> Icons.Default.Grass
+}
+
+@Preview(showBackground = true)
+@Composable
+fun StatisticsScreenPreview() {
+    PlantOSTheme {
+        StatisticsScreen()
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ZoneHeaderPreview() {
+    PlantOSTheme {
+        ZoneHeader(
+            node = MockData.nodes.first(),
+            isExpanded = true,
+            onToggle = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun StatCardPreview() {
+    PlantOSTheme {
+        StatCard(
+            statistic = MockData.nodes.first().statistics.first(),
+            zoneName = "Test Zone"
+        )
+    }
 }

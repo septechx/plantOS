@@ -10,7 +10,6 @@ enum class StatType(val unit: String, val iconRes: String, val color: Color) {
 }
 
 data class Statistic(
-    val id: Int,
     val type: StatType,
     val history: List<Float>
 )
