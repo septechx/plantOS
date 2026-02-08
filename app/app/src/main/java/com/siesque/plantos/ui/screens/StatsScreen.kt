@@ -379,7 +379,7 @@ fun ListStats(
 ) {
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(nodes, key = { it.id }) { node ->
             val isExpanded = expandedZones[node] ?: true
