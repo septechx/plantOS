@@ -51,6 +51,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,28 +75,33 @@ import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun StatisticsScreen(modifier: Modifier = Modifier) {
-    var selectedDesign by remember { mutableStateOf(DesignType.LIST) }
-    val expandedZones = remember { mutableStateMapOf<ZoneNode, Boolean>() }
-
-    MockData.nodes.forEach { node ->
-        if (!expandedZones.containsKey(node)) {
-            expandedZones[node] = true
+    var selectedDesign by rememberSaveable { mutableStateOf(DesignType.LIST) }
+    val savedExpandedZones = rememberSaveable {
+        MockData.nodes.associate { it.id to true }.toMutableMap()
+    }
+    val expandedZones = remember {
+        mutableStateMapOf<Int, Boolean>().apply {
+            putAll(savedExpandedZones)
         }
     }
 
     fun toggleZone(node: ZoneNode) {
-        expandedZones[node] = !(expandedZones[node] ?: true)
+        val newValue = !(expandedZones[node.id] ?: true)
+        expandedZones[node.id] = newValue
+        savedExpandedZones[node.id] = newValue
     }
 
     fun expandAll() {
         MockData.nodes.forEach { node ->
-            expandedZones[node] = true
+            expandedZones[node.id] = true
+            savedExpandedZones[node.id] = true
         }
     }
 
     fun collapseAll() {
         MockData.nodes.forEach { node ->
-            expandedZones[node] = false
+            expandedZones[node.id] = false
+            savedExpandedZones[node.id] = false
         }
     }
 
@@ -275,7 +281,7 @@ fun DesignSelector(
 @Composable
 fun GraphStats(
     nodes: List<ZoneNode>,
-    expandedZones: Map<ZoneNode, Boolean>,
+    expandedZones: Map<Int, Boolean>,
     onToggleZone: (ZoneNode) -> Unit
 ) {
     Column(
@@ -285,7 +291,7 @@ fun GraphStats(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         nodes.forEach { node ->
-            val isExpanded = expandedZones[node] ?: true
+            val isExpanded = expandedZones[node.id] ?: true
 
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -374,7 +380,7 @@ private fun GraphStatCard(
 @Composable
 fun ListStats(
     nodes: List<ZoneNode>,
-    expandedZones: Map<ZoneNode, Boolean>,
+    expandedZones: Map<Int, Boolean>,
     onToggleZone: (ZoneNode) -> Unit
 ) {
     LazyColumn(
@@ -382,7 +388,7 @@ fun ListStats(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(nodes, key = { it.id }) { node ->
-            val isExpanded = expandedZones[node] ?: true
+            val isExpanded = expandedZones[node.id] ?: true
 
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
