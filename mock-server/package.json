@@ -4,6 +4,8 @@
   "description": "Mock PlantOS hub server for development",
   "scripts": {
     "dev": "tsx src/index.ts",
+    "test": "tsx test/integration.ts",
+    "test:load": "tsx test/load.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

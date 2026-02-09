@@ -69,14 +69,17 @@ const Timestamp = google.protobuf.Timestamp;
 
 export type MessageHandler = (data: Uint8Array) => Uint8Array | null;
 
-function createMessagePrefix(messageType: number): Uint8Array {
+export function createMessagePrefix(messageType: number): Uint8Array {
   const buffer = new ArrayBuffer(4);
   const view = new DataView(buffer);
   view.setUint32(0, messageType, true);
   return new Uint8Array(buffer);
 }
 
-function encodeMessage(messageType: number, payload: Uint8Array): Uint8Array {
+export function encodeMessage(
+  messageType: number,
+  payload: Uint8Array,
+): Uint8Array {
   const prefix = createMessagePrefix(messageType);
   const combined = new Uint8Array(prefix.length + payload.length);
   combined.set(prefix, 0);
