@@ -52,19 +52,22 @@ export const ErrorCode = {
   ERROR_CODE_VERSION_MISMATCH: 8,
 } as const;
 
-const Hello = v1.Hello;
-const Welcome = v1.Welcome;
-const ListZonesRequest = v1.ListZonesRequest;
-const ListZonesResponse = v1.ListZonesResponse;
-const GetZoneRequest = v1.GetZoneRequest;
-const GetZoneResponse = v1.GetZoneResponse;
-const GetStatisticsRequest = v1.GetStatisticsRequest;
-const GetStatisticsResponse = v1.GetStatisticsResponse;
-const ListModulesResponse = v1.ListModulesResponse;
-const GetModuleRequest = v1.GetModuleRequest;
-const GetModuleResponse = v1.GetModuleResponse;
-const ErrorResponse = v1.ErrorResponse;
-const StatisticsUpdate = v1.StatisticsUpdate;
+const {
+  Hello,
+  Welcome,
+  ListZonesRequest,
+  ListZonesResponse,
+  GetZoneRequest,
+  GetZoneResponse,
+  ListModulesResponse,
+  GetModuleRequest,
+  GetModuleResponse,
+  GetStatisticsRequest,
+  GetStatisticsResponse,
+  ErrorResponse,
+  StatisticsUpdate,
+} = v1;
+
 const Timestamp = google.protobuf.Timestamp;
 
 export type MessageHandler = (data: Uint8Array) => Uint8Array | null;
