@@ -28,6 +28,14 @@ android {
             )
         }
     }
+
+    sourceSets {
+        getByName("main") {
+            java {
+                srcDirs("src/main/proto-generated")
+            }
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -38,6 +46,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.protobuf.kotlin.lite)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
