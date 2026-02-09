@@ -9,10 +9,6 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
     "rootDir": "src",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "resolveJsonModule": true,
     "lib": ["ES2022"]
   },
   "include": ["src/**/*"],

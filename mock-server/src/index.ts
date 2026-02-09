@@ -1,30 +1,12 @@
 import { WebSocketServer, WebSocket } from "ws";
-import {
-  routeMessage,
-  createStatisticsUpdate,
-  getMessageTypeName,
-} from "./handlers";
+import { parseMessage, getMessageTypeName } from "@plantos/admin-proto";
+import { routeMessage, createStatisticsUpdate } from "./handlers";
 import { getZones } from "./mockData";
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8080;
 const BROADCAST_INTERVAL = 5000; // 5 seconds
 
 const clients: Set<WebSocket> = new Set();
-
-function parseMessage(
-  data: Uint8Array,
-): { messageType: number; payload: Uint8Array } | null {
-  if (data.length < 4) {
-    console.error("Message too short");
-    return null;
-  }
-
-  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
-  const messageType = view.getUint32(0, true);
-  const payload = data.slice(4);
-
-  return { messageType, payload };
-}
 
 function broadcast(data: Uint8Array): void {
   clients.forEach((client) => {
@@ -65,7 +47,7 @@ function startServer(): void {
 
     ws.on("message", (data: Buffer) => {
       try {
-        const parsed = parseMessage(new Uint8Array(data));
+        const parsed = parseMessage(data);
         if (!parsed) {
           console.error("Failed to parse message");
           return;

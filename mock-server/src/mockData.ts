@@ -1,51 +1,31 @@
-import { plantos, google } from "./proto-generated/admin";
-
-const v1 = plantos.admin.v1;
+import { v1, common, Status, StatisticType } from "@plantos/admin-proto";
 
 const Zone = v1.Zone;
 const Module = v1.Module;
 const Statistic = v1.Statistic;
 const StatisticDataPoint = v1.StatisticDataPoint;
-const Timestamp = google.protobuf.Timestamp;
+const Timestamp = common.protobuf.Timestamp;
 
-export type ZoneType = InstanceType<typeof Zone>;
-export type ModuleType = InstanceType<typeof Module>;
-export type StatisticType = InstanceType<typeof Statistic>;
-
-export const StatisticTypeValues = {
-  STATISTIC_TYPE_UNSPECIFIED: 0,
-  STATISTIC_TYPE_TEMPERATURE: 1,
-  STATISTIC_TYPE_HUMIDITY: 2,
-  STATISTIC_TYPE_LIGHT: 3,
-  STATISTIC_TYPE_SOIL_MOISTURE: 4,
-  STATISTIC_TYPE_BATTERY: 5,
-} as const;
-
-export const StatusValues = {
-  STATUS_UNSPECIFIED: 0,
-  STATUS_IDLE: 1,
-  STATUS_WORKING: 2,
-  STATUS_PAUSED: 3,
-  STATUS_ERROR: 4,
-  STATUS_OFFLINE: 5,
-} as const;
+export type ZoneType = v1.Zone;
+export type ModuleType = v1.Module;
+export type StatisticTypeObj = v1.Statistic;
 
 const ZONE_DEFINITIONS = [
   {
     id: 0,
     name: "Monstera Deliciosa",
     icon: "🌿",
-    status: StatusValues.STATUS_IDLE,
+    status: Status.STATUS_IDLE,
   },
   {
     id: 1,
     name: "Fiddle Leaf Fig",
     icon: "🌿",
-    status: StatusValues.STATUS_WORKING,
+    status: Status.STATUS_WORKING,
   },
-  { id: 2, name: "Snake Plant", icon: "🌿", status: StatusValues.STATUS_IDLE },
-  { id: 3, name: "Peace Lily", icon: "🌿", status: StatusValues.STATUS_PAUSED },
-  { id: 4, name: "Aloe Vera", icon: "🌿", status: StatusValues.STATUS_IDLE },
+  { id: 2, name: "Snake Plant", icon: "🌿", status: Status.STATUS_IDLE },
+  { id: 3, name: "Peace Lily", icon: "🌿", status: Status.STATUS_PAUSED },
+  { id: 4, name: "Aloe Vera", icon: "🌿", status: Status.STATUS_IDLE },
 ];
 
 const BASE_STATISTICS = [
@@ -137,7 +117,7 @@ export function updateStatistics(): void {
   });
 }
 
-function createTimestampFromDaysAgo(days: number): google.protobuf.Timestamp {
+function createTimestampFromDaysAgo(days: number): common.protobuf.Timestamp {
   const date = new Date();
   date.setDate(date.getDate() - days);
   return Timestamp.fromObject({
@@ -150,12 +130,12 @@ function createStatistic(
   type: number,
   values: number[],
   hoursBack: number = 24,
-): InstanceType<typeof Statistic> {
+): v1.Statistic {
   const stat = new Statistic();
   stat.type = type;
 
   const now = new Date();
-  const history: InstanceType<typeof StatisticDataPoint>[] = [];
+  const history: v1.StatisticDataPoint[] = [];
 
   values.forEach((value, index) => {
     const dataPoint = new StatisticDataPoint();
@@ -175,7 +155,7 @@ function createStatistic(
   return stat;
 }
 
-export function getZones(): ZoneType[] {
+export function getZones(): v1.Zone[] {
   return ZONE_DEFINITIONS.map((def, index) => {
     const zone = new Zone();
     zone.id = def.id;
@@ -197,7 +177,7 @@ export function getZones(): ZoneType[] {
 
       // Temperature
       const tempStat = new Statistic();
-      tempStat.type = StatisticTypeValues.STATISTIC_TYPE_TEMPERATURE;
+      tempStat.type = StatisticType.STATISTIC_TYPE_TEMPERATURE;
       const tempPoint = new StatisticDataPoint();
       tempPoint.timestamp = nowTimestamp;
       tempPoint.value = current.temperature;
@@ -205,7 +185,7 @@ export function getZones(): ZoneType[] {
 
       // Humidity
       const humidStat = new Statistic();
-      humidStat.type = StatisticTypeValues.STATISTIC_TYPE_HUMIDITY;
+      humidStat.type = StatisticType.STATISTIC_TYPE_HUMIDITY;
       const humidPoint = new StatisticDataPoint();
       humidPoint.timestamp = nowTimestamp;
       humidPoint.value = current.humidity;
@@ -213,7 +193,7 @@ export function getZones(): ZoneType[] {
 
       // Light
       const lightStat = new Statistic();
-      lightStat.type = StatisticTypeValues.STATISTIC_TYPE_LIGHT;
+      lightStat.type = StatisticType.STATISTIC_TYPE_LIGHT;
       const lightPoint = new StatisticDataPoint();
       lightPoint.timestamp = nowTimestamp;
       lightPoint.value = current.light;
@@ -226,26 +206,23 @@ export function getZones(): ZoneType[] {
   });
 }
 
-export function getZoneById(zoneId: number): ZoneType | undefined {
+export function getZoneById(zoneId: number): v1.Zone | undefined {
   return getZones().find((z) => z.id === zoneId);
 }
 
-export function getZoneStatistics(zoneId: number): StatisticType[] {
+export function getZoneStatistics(zoneId: number): v1.Statistic[] {
   const zoneIndex = ZONE_DEFINITIONS.findIndex((z) => z.id === zoneId);
   if (zoneIndex === -1) return [];
 
   const base = BASE_STATISTICS[zoneIndex];
   return [
-    createStatistic(
-      StatisticTypeValues.STATISTIC_TYPE_TEMPERATURE,
-      base.temperature,
-    ),
-    createStatistic(StatisticTypeValues.STATISTIC_TYPE_HUMIDITY, base.humidity),
-    createStatistic(StatisticTypeValues.STATISTIC_TYPE_LIGHT, base.light),
+    createStatistic(StatisticType.STATISTIC_TYPE_TEMPERATURE, base.temperature),
+    createStatistic(StatisticType.STATISTIC_TYPE_HUMIDITY, base.humidity),
+    createStatistic(StatisticType.STATISTIC_TYPE_LIGHT, base.light),
   ];
 }
 
-export function getCurrentStatistics(zoneId: number): StatisticType[] {
+export function getCurrentStatistics(zoneId: number): v1.Statistic[] {
   const current = currentStatistics[zoneId];
   if (!current) return [];
 
@@ -255,11 +232,11 @@ export function getCurrentStatistics(zoneId: number): StatisticType[] {
     nanos: (now.getTime() % 1000) * 1_000_000,
   });
 
-  const stats: StatisticType[] = [];
+  const stats: v1.Statistic[] = [];
 
   // Temperature
   const tempStat = new Statistic();
-  tempStat.type = StatisticTypeValues.STATISTIC_TYPE_TEMPERATURE;
+  tempStat.type = StatisticType.STATISTIC_TYPE_TEMPERATURE;
   const tempPoint = new StatisticDataPoint();
   tempPoint.timestamp = nowTimestamp;
   tempPoint.value = current.temperature;
@@ -268,7 +245,7 @@ export function getCurrentStatistics(zoneId: number): StatisticType[] {
 
   // Humidity
   const humidStat = new Statistic();
-  humidStat.type = StatisticTypeValues.STATISTIC_TYPE_HUMIDITY;
+  humidStat.type = StatisticType.STATISTIC_TYPE_HUMIDITY;
   const humidPoint = new StatisticDataPoint();
   humidPoint.timestamp = nowTimestamp;
   humidPoint.value = current.humidity;
@@ -277,7 +254,7 @@ export function getCurrentStatistics(zoneId: number): StatisticType[] {
 
   // Light
   const lightStat = new Statistic();
-  lightStat.type = StatisticTypeValues.STATISTIC_TYPE_LIGHT;
+  lightStat.type = StatisticType.STATISTIC_TYPE_LIGHT;
   const lightPoint = new StatisticDataPoint();
   lightPoint.timestamp = nowTimestamp;
   lightPoint.value = current.light;
@@ -287,11 +264,11 @@ export function getCurrentStatistics(zoneId: number): StatisticType[] {
   return stats;
 }
 
-export function getModules(): ModuleType[] {
+export function getModules(): v1.Module[] {
   const module = new Module();
   module.id = 1;
   module.name = "Main Module";
-  module.status = StatusValues.STATUS_IDLE;
+  module.status = Status.STATUS_IDLE;
   module.batteryLevel = 85;
   module.zoneIds = [0, 1, 2, 3, 4];
   module.lastSeen = Timestamp.fromObject({
@@ -302,7 +279,7 @@ export function getModules(): ModuleType[] {
   return [module];
 }
 
-export function getModuleById(moduleId: number): ModuleType | undefined {
+export function getModuleById(moduleId: number): v1.Module | undefined {
   return getModules().find((m) => m.id === moduleId);
 }
 
