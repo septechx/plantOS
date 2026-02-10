@@ -184,8 +184,10 @@ describe("PlantOS Admin Protocol", () => {
     const getResponse = GetZoneSettingsResponse.decode(getPayload);
     expect(getResponse.settings).toBeDefined();
 
-    const newSettings = getResponse.settings!;
-    newSettings.notifyOnError = !newSettings.notifyOnError;
+    const newSettings = {
+      ...getResponse.settings!,
+      notifyOnError: !getResponse.settings!.notifyOnError,
+    };
 
     client.send(
       MessageType.MSG_UPDATE_ZONE_SETTINGS_REQUEST,
