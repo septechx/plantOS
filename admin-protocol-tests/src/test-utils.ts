@@ -9,37 +9,66 @@ import {
 
 const { Hello, Welcome } = v1;
 
-const PORT = 8080;
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8080;
 const URL = `ws://localhost:${PORT}/v1/admin`;
 
 export class TestClient {
-  ws: WebSocket;
+  ws: WebSocket | undefined;
   messageQueue: { type: number; payload: Uint8Array }[] = [];
   messageWaiters: { type: number; resolve: (payload: Uint8Array) => void }[] =
     [];
   isConnected: boolean = false;
 
-  constructor() {
+  constructor() {}
+
+  async connect(): Promise<void> {
+    // Return immediately if already connected and open
+    if (this.ws?.readyState === WebSocket.OPEN) return;
+
+    // Reuse existing socket if it's connecting (not closed)
+    if (
+      this.ws &&
+      this.ws.readyState !== WebSocket.CLOSED &&
+      this.ws.readyState !== WebSocket.CLOSING
+    ) {
+      if (this.ws.readyState === WebSocket.CONNECTING) {
+        return new Promise((resolve, reject) => {
+          const timeout = setTimeout(
+            () => reject(new Error("Connection timeout")),
+            5000,
+          );
+          this.ws!.once("open", () => {
+            clearTimeout(timeout);
+            this.isConnected = true;
+            resolve();
+          });
+          this.ws!.once("error", (err) => {
+            clearTimeout(timeout);
+            reject(err);
+          });
+        });
+      }
+      return;
+    }
+
+    // Create new WebSocket if none exists or it's closed
     this.ws = new WebSocket(URL);
     this.ws.on("open", () => {
       this.isConnected = true;
     });
     this.ws.on("message", (data: Buffer) => this.handleMessage(data));
     this.ws.on("error", (err) => console.error("WS Error:", err));
-  }
 
-  async connect(): Promise<void> {
-    if (this.ws.readyState === WebSocket.OPEN) return;
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(
         () => reject(new Error("Connection timeout")),
         5000,
       );
-      this.ws.once("open", () => {
+      this.ws!.once("open", () => {
         clearTimeout(timeout);
         resolve();
       });
-      this.ws.once("error", (err) => {
+      this.ws!.once("error", (err) => {
         clearTimeout(timeout);
         reject(err);
       });
@@ -47,10 +76,11 @@ export class TestClient {
   }
 
   close() {
-    this.ws.close();
+    this.ws?.close();
   }
 
   send(type: number, message: any, encoder: any) {
+    if (!this.ws) throw new Error("WebSocket not connected");
     const payload = encoder.encode(message).finish();
     this.ws.send(encodeMessage(type, payload));
   }
