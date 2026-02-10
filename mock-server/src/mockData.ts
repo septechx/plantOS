@@ -155,6 +155,37 @@ function createStatistic(
   return stat;
 }
 
+function buildStatisticsFromCurrent(
+  current: { temperature: number; humidity: number; light: number },
+  nowTimestamp: ReturnType<typeof Timestamp.fromObject>
+): v1.Statistic[] {
+  // Temperature
+  const tempStat = new Statistic();
+  tempStat.type = StatisticType.STATISTIC_TYPE_TEMPERATURE;
+  const tempPoint = new StatisticDataPoint();
+  tempPoint.timestamp = nowTimestamp;
+  tempPoint.value = current.temperature;
+  tempStat.history = [tempPoint];
+
+  // Humidity
+  const humidStat = new Statistic();
+  humidStat.type = StatisticType.STATISTIC_TYPE_HUMIDITY;
+  const humidPoint = new StatisticDataPoint();
+  humidPoint.timestamp = nowTimestamp;
+  humidPoint.value = current.humidity;
+  humidStat.history = [humidPoint];
+
+  // Light
+  const lightStat = new Statistic();
+  lightStat.type = StatisticType.STATISTIC_TYPE_LIGHT;
+  const lightPoint = new StatisticDataPoint();
+  lightPoint.timestamp = nowTimestamp;
+  lightPoint.value = current.light;
+  lightStat.history = [lightPoint];
+
+  return [tempStat, humidStat, lightStat];
+}
+
 export function getZones(): v1.Zone[] {
   return ZONE_DEFINITIONS.map((def, index) => {
     const zone = new Zone();
@@ -175,31 +206,7 @@ export function getZones(): v1.Zone[] {
         nanos: (now.getTime() % 1000) * 1_000_000,
       });
 
-      // Temperature
-      const tempStat = new Statistic();
-      tempStat.type = StatisticType.STATISTIC_TYPE_TEMPERATURE;
-      const tempPoint = new StatisticDataPoint();
-      tempPoint.timestamp = nowTimestamp;
-      tempPoint.value = current.temperature;
-      tempStat.history = [tempPoint];
-
-      // Humidity
-      const humidStat = new Statistic();
-      humidStat.type = StatisticType.STATISTIC_TYPE_HUMIDITY;
-      const humidPoint = new StatisticDataPoint();
-      humidPoint.timestamp = nowTimestamp;
-      humidPoint.value = current.humidity;
-      humidStat.history = [humidPoint];
-
-      // Light
-      const lightStat = new Statistic();
-      lightStat.type = StatisticType.STATISTIC_TYPE_LIGHT;
-      const lightPoint = new StatisticDataPoint();
-      lightPoint.timestamp = nowTimestamp;
-      lightPoint.value = current.light;
-      lightStat.history = [lightPoint];
-
-      zone.currentStatistics = [tempStat, humidStat, lightStat];
+      zone.currentStatistics = buildStatisticsFromCurrent(current, nowTimestamp);
     }
 
     return zone;
@@ -232,36 +239,7 @@ export function getCurrentStatistics(zoneId: number): v1.Statistic[] {
     nanos: (now.getTime() % 1000) * 1_000_000,
   });
 
-  const stats: v1.Statistic[] = [];
-
-  // Temperature
-  const tempStat = new Statistic();
-  tempStat.type = StatisticType.STATISTIC_TYPE_TEMPERATURE;
-  const tempPoint = new StatisticDataPoint();
-  tempPoint.timestamp = nowTimestamp;
-  tempPoint.value = current.temperature;
-  tempStat.history = [tempPoint];
-  stats.push(tempStat);
-
-  // Humidity
-  const humidStat = new Statistic();
-  humidStat.type = StatisticType.STATISTIC_TYPE_HUMIDITY;
-  const humidPoint = new StatisticDataPoint();
-  humidPoint.timestamp = nowTimestamp;
-  humidPoint.value = current.humidity;
-  humidStat.history = [humidPoint];
-  stats.push(humidStat);
-
-  // Light
-  const lightStat = new Statistic();
-  lightStat.type = StatisticType.STATISTIC_TYPE_LIGHT;
-  const lightPoint = new StatisticDataPoint();
-  lightPoint.timestamp = nowTimestamp;
-  lightPoint.value = current.light;
-  lightStat.history = [lightPoint];
-  stats.push(lightStat);
-
-  return stats;
+  return buildStatisticsFromCurrent(current, nowTimestamp);
 }
 
 export function getModules(): v1.Module[] {
