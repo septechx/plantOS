@@ -5,7 +5,7 @@ import {
   parseMessage,
   getMessageTypeName,
   v1,
-} from "./handlers";
+} from "@plantos/admin-proto";
 
 const { Hello, Welcome } = v1;
 

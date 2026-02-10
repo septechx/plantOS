@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { TestClient } from "./test-utils";
-import { MessageType, v1 } from "./handlers";
+import { MessageType, v1 } from "@plantos/admin-proto";
 
 const {
   ListZonesRequest,
@@ -198,6 +198,9 @@ describe("PlantOS Admin Protocol", () => {
     );
     const updateResponse = UpdateZoneSettingsResponse.decode(updatePayload);
     expect(updateResponse.success).toBe(true);
+    expect(updateResponse.updatedSettings?.notifyOnError).toBe(
+      newSettings.notifyOnError,
+    );
   });
 
   it("should water a zone", async () => {
