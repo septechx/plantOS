@@ -1,6 +1,7 @@
 {
   "name": "plantos-mock-server",
   "version": "1.0.0",
+  "private": true,
   "description": "Mock PlantOS hub server for development",
   "scripts": {
     "dev": "tsx src/index.ts",
