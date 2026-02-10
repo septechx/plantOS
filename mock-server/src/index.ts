@@ -16,8 +16,8 @@ function broadcast(data: Uint8Array): void {
   });
 }
 
-function startBroadcasts(): void {
-  setInterval(() => {
+function startBroadcasts(): NodeJS.Timeout {
+  return setInterval(() => {
     if (clients.size === 0) return;
 
     const zones = getZones();
@@ -77,10 +77,11 @@ function startServer(): void {
     });
   });
 
-  startBroadcasts();
+  const broadcastInterval = startBroadcasts();
 
   process.on("SIGINT", () => {
     console.log("\nShutting down server...");
+    clearInterval(broadcastInterval);
     wss.close(() => {
       console.log("Server closed");
       process.exit(0);
@@ -89,6 +90,7 @@ function startServer(): void {
 
   process.on("SIGTERM", () => {
     console.log("\nShutting down server...");
+    clearInterval(broadcastInterval);
     wss.close(() => {
       console.log("Server closed");
       process.exit(0);
