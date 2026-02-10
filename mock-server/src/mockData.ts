@@ -12,35 +12,35 @@ export type StatisticTypeObj = v1.Statistic;
 
 const ZONE_DEFINITIONS = [
   {
-    id: 0,
+    id: 1,
     name: "Monstera Deliciosa",
     icon: "🌿",
     status: Status.STATUS_IDLE,
     daysAgo: 2,
   },
   {
-    id: 1,
+    id: 2,
     name: "Fiddle Leaf Fig",
     icon: "🌿",
     status: Status.STATUS_WORKING,
     daysAgo: 0,
   },
   {
-    id: 2,
+    id: 3,
     name: "Snake Plant",
     icon: "🌿",
     status: Status.STATUS_IDLE,
     daysAgo: 7,
   },
   {
-    id: 3,
+    id: 4,
     name: "Peace Lily",
     icon: "🌿",
     status: Status.STATUS_PAUSED,
     daysAgo: 1,
   },
   {
-    id: 4,
+    id: 5,
     name: "Aloe Vera",
     icon: "🌿",
     status: Status.STATUS_IDLE,
@@ -54,7 +54,7 @@ const MODULE_DEFINITIONS = [
     name: "Main Module",
     status: Status.STATUS_IDLE,
     batteryLevel: 85,
-    zoneIds: [0, 1, 2, 3, 4],
+    zoneIds: [1, 2, 3, 4, 5],
     lastSeen: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
   },
   {
@@ -62,7 +62,7 @@ const MODULE_DEFINITIONS = [
     name: "Secondary Module",
     status: Status.STATUS_WORKING,
     batteryLevel: 72,
-    zoneIds: [0, 2, 4],
+    zoneIds: [1, 3, 5],
     lastSeen: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
   },
   {
@@ -70,7 +70,7 @@ const MODULE_DEFINITIONS = [
     name: "Expansion Module",
     status: Status.STATUS_IDLE,
     batteryLevel: 95,
-    zoneIds: [1, 3],
+    zoneIds: [2, 4],
     lastSeen: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
   },
 ];

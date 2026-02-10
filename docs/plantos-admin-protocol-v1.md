@@ -317,7 +317,7 @@ message Statistic {
 }
 
 message Zone {
-  int32 id = 1;
+  int32 id = 1;  // 1-based identifier (zone ID 0 is reserved/invalid)
   int32 module_id = 2;  // ID of the controlling module
   string name = 3;
   string icon = 4;  // Unicode emoji or icon identifier
@@ -798,6 +798,7 @@ All errors return `ErrorResponse` with:
 - Cache zone/module data, invalidate on updates
 - Request statistics with appropriate aggregation to reduce data transfer
 - Handle all error codes gracefully
+- Note: Zone and module IDs are 1-based; ID 0 is reserved and invalid
 
 ### 7.2 Hub Guidelines
 
