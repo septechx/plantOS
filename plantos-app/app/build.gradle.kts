@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.protobuf)
+    alias(libs.plugins.wire)
 }
 
 android {
@@ -39,40 +39,18 @@ android {
     }
 }
 
-protobuf {
-    protoc {
-        artifact = "com.google.protobuf:protoc:4.30.0"
+wire {
+    sourcePath {
+        srcDir("../../proto")
     }
-    plugins {
-        create("kotlin") {
-            artifact = "com.google.protobuf:protoc-gen-kotlin:4.30.0"
-        }
-    }
-    sourceSets {
-        main {
-            proto {
-                srcDir("../../../proto")
-            }
-        }
-    }
-    generateProtoTasks {
-        all().forEach { task ->
-            task.builtins {
-                create("java") {
-                    option("lite")
-                }
-            }
-            task.plugins {
-                create("kotlin") {
-                    option("lite")
-                }
-            }
-        }
+    kotlin {
+        android = true
+        javaInterop = true
     }
 }
 
 dependencies {
-    implementation(libs.protobuf.kotlin.lite)
+    implementation(libs.wire.runtime)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
