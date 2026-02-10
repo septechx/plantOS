@@ -81,7 +81,9 @@ export class TestClient {
   }
 
   send<T>(type: number, message: T, encoder: { encode(msg: T): { finish(): Uint8Array } }): void {
-    if (!this.ws) throw new Error("WebSocket not connected");
+    if (!this.ws || (this.ws.readyState !== WebSocket.OPEN && this.ws.readyState !== 1)) {
+      throw new Error("WebSocket not connected or not open");
+    }
     const payload = encoder.encode(message).finish();
     this.ws.send(encodeMessage(type, payload));
   }
