@@ -150,6 +150,20 @@ function handleGetStatisticsRequest(data: Uint8Array): Uint8Array {
 
   let statistics = getZoneStatistics(zoneId);
 
+  if (from && to) {
+    const fromTime =
+      (Number(from.seconds) || 0) * 1000 + (from.nanos || 0) / 1_000_000;
+    const toTime =
+      (Number(to.seconds) || 0) * 1000 + (to.nanos || 0) / 1_000_000;
+
+    statistics = statistics.filter((s) => {
+      if (!s.time) return false;
+      const statTime =
+        (Number(s.time.seconds) || 0) * 1000 + (s.time.nanos || 0) / 1_000_000;
+      return statTime >= fromTime && statTime <= toTime;
+    });
+  }
+
   if (types.length > 0) {
     statistics = statistics.filter((s) => types.includes(s.type));
   }
