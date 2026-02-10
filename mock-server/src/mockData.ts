@@ -54,7 +54,7 @@ const MODULE_DEFINITIONS = [
     name: "Main Module",
     status: Status.STATUS_IDLE,
     batteryLevel: 85,
-    zoneIds: [1, 2, 3, 4, 5],
+    zoneIds: [1, 2],
     lastSeen: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
   },
   {
@@ -62,7 +62,7 @@ const MODULE_DEFINITIONS = [
     name: "Secondary Module",
     status: Status.STATUS_WORKING,
     batteryLevel: 72,
-    zoneIds: [1, 3, 5],
+    zoneIds: [3, 4],
     lastSeen: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
   },
   {
@@ -70,7 +70,7 @@ const MODULE_DEFINITIONS = [
     name: "Expansion Module",
     status: Status.STATUS_IDLE,
     batteryLevel: 95,
-    zoneIds: [2, 4],
+    zoneIds: [5],
     lastSeen: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
   },
 ];
@@ -238,7 +238,11 @@ export function getZones(): v1.Zone[] {
   return ZONE_DEFINITIONS.map((def, index) => {
     const zone = new Zone();
     zone.id = def.id;
-    zone.moduleId = 1;
+    
+    // Find which module contains this zone
+    const parentModule = MODULE_DEFINITIONS.find(m => m.zoneIds.includes(def.id));
+    zone.moduleId = parentModule ? parentModule.id : 0;
+
     zone.name = def.name;
     zone.icon = def.icon;
     zone.status = def.status;

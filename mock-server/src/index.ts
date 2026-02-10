@@ -3,8 +3,6 @@ import { parseMessage, getMessageTypeName } from "@plantos/admin-proto";
 import { routeMessage, createStatisticsUpdate } from "./handlers";
 import { getZones, initializeMockData, updateStatistics } from "./mockData";
 
-initializeMockData();
-
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8080;
 const BROADCAST_INTERVAL = 5000; // 5 seconds
 
@@ -34,6 +32,8 @@ function startBroadcasts(): NodeJS.Timeout {
 }
 
 function startServer(): void {
+  initializeMockData();
+
   const wss = new WebSocketServer({
     port: PORT,
     path: "/v1/admin",

@@ -149,22 +149,25 @@ function handleGetStatisticsRequest(data: Uint8Array): Uint8Array {
 
   let statistics = getZoneStatistics(zoneId);
 
+  if (types.length > 0) {
+    statistics = statistics.filter((s) => types.includes(s.type));
+  }
+
   if (from && to) {
     const fromTime =
       (Number(from.seconds) || 0) * 1000 + (from.nanos || 0) / 1_000_000;
     const toTime =
       (Number(to.seconds) || 0) * 1000 + (to.nanos || 0) / 1_000_000;
 
-    statistics = statistics.filter((s) => {
-      if (!s.time) return false;
-      const statTime =
-        (Number(s.time.seconds) || 0) * 1000 + (s.time.nanos || 0) / 1_000_000;
-      return statTime >= fromTime && statTime <= toTime;
+    statistics.forEach((s) => {
+      s.history = s.history.filter((dp) => {
+        if (!dp.timestamp) return false;
+        const dpTime =
+          (Number(dp.timestamp.seconds) || 0) * 1000 +
+          (dp.timestamp.nanos || 0) / 1_000_000;
+        return dpTime >= fromTime && dpTime <= toTime;
+      });
     });
-  }
-
-  if (types.length > 0) {
-    statistics = statistics.filter((s) => types.includes(s.type));
   }
 
   response.statistics = statistics;
@@ -273,7 +276,7 @@ export function routeMessage(
     return handler(data);
   }
 
-  if (unimplementedRequests.includes(messageType)) {
+  if ((unimplementedRequests as number[]).includes(messageType)) {
     return handleNotImplemented(data, messageType);
   }
 
@@ -281,6 +284,7 @@ export function routeMessage(
   const error = new ErrorResponse();
   error.code = ErrorCode.ERROR_CODE_INVALID_REQUEST;
   error.message = `Unknown message type: ${messageType}`;
+  error.requestType = messageType;
   return encodeMessage(
     MessageType.MSG_ERROR_RESPONSE,
     ErrorResponse.encode(error).finish(),
