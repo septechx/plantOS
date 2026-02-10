@@ -9,7 +9,7 @@ import {
 
 const { Hello, Welcome } = v1;
 
-const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8080;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
 const URL = `ws://localhost:${PORT}/v1/admin`;
 
 export class TestClient {

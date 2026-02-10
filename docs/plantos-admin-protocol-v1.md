@@ -771,9 +771,10 @@ All errors return `ErrorResponse` with:
 
 ```json
 {
+  "v": 1,
   "hub_id": "hub-abc123",
   "hub_address": "wss://192.168.1.100:443/v1/admin",
-  "encryption_key": "base64-encoded-key"
+  "key": "base64-encoded-key"
 }
 ```
 

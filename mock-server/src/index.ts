@@ -34,6 +34,10 @@ function startServer(): void {
   const wss = new WebSocketServer({
     port: PORT,
     path: "/v1/admin",
+    handleProtocols: (protocols) => {
+      if (protocols.has("plantos-protobuf")) return "plantos-protobuf";
+      return false;
+    },
   });
 
   console.log(`🌱 PlantOS Mock Server`);

@@ -16,16 +16,18 @@ const ZONE_DEFINITIONS = [
     name: "Monstera Deliciosa",
     icon: "🌿",
     status: Status.STATUS_IDLE,
+    daysAgo: 2,
   },
   {
     id: 1,
     name: "Fiddle Leaf Fig",
     icon: "🌿",
     status: Status.STATUS_WORKING,
+    daysAgo: 0,
   },
-  { id: 2, name: "Snake Plant", icon: "🌿", status: Status.STATUS_IDLE },
-  { id: 3, name: "Peace Lily", icon: "🌿", status: Status.STATUS_PAUSED },
-  { id: 4, name: "Aloe Vera", icon: "🌿", status: Status.STATUS_IDLE },
+  { id: 2, name: "Snake Plant", icon: "🌿", status: Status.STATUS_IDLE, daysAgo: 7 },
+  { id: 3, name: "Peace Lily", icon: "🌿", status: Status.STATUS_PAUSED, daysAgo: 1 },
+  { id: 4, name: "Aloe Vera", icon: "🌿", status: Status.STATUS_IDLE, daysAgo: 5 },
 ];
 
 const BASE_STATISTICS = [
@@ -195,8 +197,7 @@ export function getZones(): v1.Zone[] {
     zone.icon = def.icon;
     zone.status = def.status;
 
-    const daysAgo = [2, 0, 7, 1, 5][index];
-    zone.lastWatered = createTimestampFromDaysAgo(daysAgo);
+    zone.lastWatered = createTimestampFromDaysAgo(def.daysAgo);
 
     const current = currentStatistics[def.id];
     if (current) {
