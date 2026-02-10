@@ -19,7 +19,7 @@ export class TestClient {
     [];
   isConnected: boolean = false;
 
-  constructor() {}
+  constructor() { }
 
   async connect(): Promise<void> {
     // Return immediately if already connected and open
@@ -77,6 +77,9 @@ export class TestClient {
 
   close() {
     this.ws?.close();
+    this.isConnected = false;
+    this.messageQueue = [];
+    this.messageWaiters = [];
   }
 
   send(type: number, message: any, encoder: any) {
