@@ -105,7 +105,7 @@ message Hello {
 message Welcome {
   string hub_id = 1;
   string hub_version = 2;
-  int64 server_timestamp = 3;  // Unix timestamp for sync
+  google.protobuf.Timestamp server_timestamp = 3;  // Server time for sync
 }
 
 // Client -> Hub: Request to list all modules
