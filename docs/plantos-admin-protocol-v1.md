@@ -246,8 +246,10 @@ When implementing the QR payload:
 
 Each WebSocket message contains:
 
-- **4 bytes**: Message type identifier (uint32)
+- **4 bytes**: Message type identifier (uint32, little-endian)
 - **N bytes**: Protobuf serialized message payload
+
+> **Note**: The uint32 message type is encoded in little-endian byte order. See Appendix B for the canonical TypeScript implementation using `setUint32(0, type, true)`.
 
 ### 2.3 Connection Lifecycle
 
