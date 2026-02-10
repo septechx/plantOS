@@ -44,7 +44,11 @@ function handleHello(data: Uint8Array): Uint8Array {
   const welcome = new Welcome();
   welcome.hubId = "mock-hub-001";
   welcome.hubVersion = "1.0.0-mock";
-  welcome.serverTimestamp = Math.floor(Date.now() / 1000);
+  const now = new Date();
+  welcome.serverTimestamp = Timestamp.fromObject({
+    seconds: Math.floor(now.getTime() / 1000),
+    nanos: (now.getTime() % 1000) * 1_000_000,
+  });
 
   return encodeMessage(
     MessageType.MSG_WELCOME,
@@ -84,7 +88,7 @@ function handleGetZoneRequest(data: Uint8Array): Uint8Array {
     const error = new ErrorResponse();
     error.code = ErrorCode.ERROR_CODE_ZONE_NOT_FOUND;
     error.message = `Zone with ID ${zoneId} not found`;
-    error.requestType = "GetZoneRequest";
+    error.requestType = MessageType.MSG_GET_ZONE_REQUEST;
     return encodeMessage(
       MessageType.MSG_ERROR_RESPONSE,
       ErrorResponse.encode(error).finish(),
@@ -117,7 +121,7 @@ function handleGetStatisticsRequest(data: Uint8Array): Uint8Array {
     const error = new ErrorResponse();
     error.code = ErrorCode.ERROR_CODE_ZONE_NOT_FOUND;
     error.message = `Zone with ID ${zoneId} not found`;
-    error.requestType = "GetStatisticsRequest";
+    error.requestType = MessageType.MSG_GET_STATISTICS_REQUEST;
     return encodeMessage(
       MessageType.MSG_ERROR_RESPONSE,
       ErrorResponse.encode(error).finish(),
@@ -133,7 +137,7 @@ function handleGetStatisticsRequest(data: Uint8Array): Uint8Array {
       const error = new ErrorResponse();
       error.code = ErrorCode.ERROR_CODE_INVALID_TIME_RANGE;
       error.message = "Invalid time range: from is after to";
-      error.requestType = "GetStatisticsRequest";
+      error.requestType = MessageType.MSG_GET_STATISTICS_REQUEST;
       return encodeMessage(
         MessageType.MSG_ERROR_RESPONSE,
         ErrorResponse.encode(error).finish(),
@@ -181,7 +185,7 @@ function handleGetModuleRequest(data: Uint8Array): Uint8Array {
     const error = new ErrorResponse();
     error.code = ErrorCode.ERROR_CODE_MODULE_NOT_FOUND;
     error.message = `Module with ID ${moduleId} not found`;
-    error.requestType = "GetModuleRequest";
+    error.requestType = MessageType.MSG_GET_MODULE_REQUEST;
     return encodeMessage(
       MessageType.MSG_ERROR_RESPONSE,
       ErrorResponse.encode(error).finish(),

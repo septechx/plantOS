@@ -131,6 +131,7 @@ describe("PlantOS Admin Protocol", () => {
       MessageType.MSG_LIST_MODULES_RESPONSE,
     );
     const listResponse = ListModulesResponse.decode(listPayload);
+    expect(listResponse.modules.length).toBeGreaterThan(0);
     const moduleId = listResponse.modules[0].id;
 
     client.send(
