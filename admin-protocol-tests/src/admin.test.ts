@@ -40,7 +40,7 @@ async function getFirstZoneId(client: TestClient): Promise<number> {
   const response = ListZonesResponse.decode(payload);
 
   expect(response.zones.length).toBeGreaterThan(0);
-  return response.zones[0].id;
+  return response.zones[0].id!;
 }
 
 describe("PlantOS Admin Protocol", () => {

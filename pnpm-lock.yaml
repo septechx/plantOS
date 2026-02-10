@@ -7,23 +7,19 @@ settings:
 importers:
 
   admin-protocol-tests:
-    dependencies:
+    devDependencies:
       '@plantos/admin-proto':
         specifier: workspace:*
         version: link:../shared/admin-proto
-      protobufjs:
-        specifier: ^7.2.6
-        version: 7.5.4
-      ws:
-        specifier: ^8.16.0
-        version: 8.19.0
-    devDependencies:
       '@types/node':
         specifier: ^20.11.24
         version: 20.19.33
       '@types/ws':
         specifier: ^8.5.10
         version: 8.18.1
+      protobufjs:
+        specifier: ^7.3.0
+        version: 7.5.4
       tsx:
         specifier: ^4.7.1
         version: 4.21.0
@@ -33,6 +29,9 @@ importers:
       vitest:
         specifier: ^1.3.1
         version: 1.6.1(@types/node@20.19.33)
+      ws:
+        specifier: ^8.16.0
+        version: 8.19.0
 
   mock-server:
     dependencies:

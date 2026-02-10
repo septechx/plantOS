@@ -4,7 +4,8 @@
   "private": true,
   "description": "Test suite for PlantOS Admin Protocol",
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@plantos/admin-proto": "workspace:*",
