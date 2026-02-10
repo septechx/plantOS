@@ -15,16 +15,17 @@ proto-generate-kotlin:
         {{PROTO_FILE}}
     @echo "Kotlin code generated in {{KOTLIN_OUT}}"
 
+[working-directory: "shared/admin-proto"]
 proto-generate-shared:
     @echo "Generating TypeScript code for shared protocol..."
     @mkdir -p {{SHARED_OUT}}
-    cd shared/admin-proto && pnpm exec pbjs \
+    pnpm exec pbjs \
         -t static-module \
         -w commonjs \
         --force-long \
         -o src/proto-generated/admin.js \
         ../../{{PROTO_FILE}}
-    cd shared/admin-proto && pnpm exec pbts \
+    pnpm exec pbts \
         -o src/proto-generated/admin.d.ts \
         src/proto-generated/admin.js
     @echo "TypeScript code generated in {{SHARED_OUT}}"
