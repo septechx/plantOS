@@ -95,7 +95,7 @@ This ensures:
 
 **Security Requirements**:
 
-- GCM nonces MUST be unique per message within a session (use CSPRNG, 96-bit random)
+- GCM nonces MUST be unique per message within a session (use CSPRNG, 96-bit random). The 96-bit nonce MUST be random and used as the GCM nonce; the 32-bit monotonic counter is only a local message-count limit to trigger session rotation and MUST NOT be substituted for the nonce.
 - Maximum messages per session: 2^32 (to avoid nonce reuse risk)
   - **Enforcement**: Both sender and receiver maintain a per-session monotonic 32-bit counter, incremented on each encrypted/decrypted message. Before encrypting or decrypting, the counter MUST be checked; if it has reached 2^32, the session MUST be terminated immediately (close connection and initiate session rotation). This enforcement is local to each endpoint—no cross-node coordination is required. The 96-bit nonce requirement (above) provides defense-in-depth, but the counter limit is the primary safeguard against nonce collision due to counter overflow.
 - Session ID must be unique and unpredictable (128-bit minimum entropy)
@@ -245,12 +245,24 @@ When implementing the QR payload:
 
 ### 2.2 Message Framing
 
-Each WebSocket message contains:
+The protocol uses two framing formats depending on the connection state:
 
+**1. Unencrypted Framing** (Handshake phase):
 - **4 bytes**: Message type identifier (uint32, little-endian)
 - **N bytes**: Protobuf serialized message payload
 
-> **Note**: The uint32 message type is encoded in little-endian byte order. See Appendix B for the canonical TypeScript implementation using `setUint32(0, type, true)`.
+This framing applies ONLY to `Hello` and `Welcome`/`Error` messages during the initial handshake.
+
+**2. Encrypted Framing** (Post-handshake phase):
+- Follows the structure defined in [Section 1.3.3 (Message Format)](#133-message-format).
+- **4 bytes**: Message type identifier (uint32, little-endian)
+- **12 bytes**: GCM nonce
+- **N bytes**: Ciphertext (Protobuf payload)
+- **16 bytes**: GCM tag
+
+**Transition**: All messages after the `Welcome` message MUST use the encrypted framing. Encoders and decoders MUST switch parsing rules immediately after successfully processing the `Welcome` message.
+
+> **Note**: The uint32 message type is always encoded in little-endian byte order. See Appendix B for the canonical TypeScript implementation using `setUint32(0, type, true)`.
 
 ### 2.3 Connection Lifecycle
 
