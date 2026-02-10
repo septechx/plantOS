@@ -1,6 +1,6 @@
 PROTO_DIR := "proto"
 SHARED_OUT := "shared/admin-proto/src/proto-generated"
-PROTO_FILE := PROTO_DIR + "/admin/v1/admin.proto"
+PROTO_FILE := PROTO_DIR + "/plantos/admin/v1/admin.proto"
 
 proto-generate-all: proto-generate-shared
     @echo "All protocol buffer code generation complete!"
