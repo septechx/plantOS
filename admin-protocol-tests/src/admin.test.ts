@@ -88,6 +88,7 @@ describe("PlantOS Admin Protocol", () => {
       MessageType.MSG_LIST_ZONES_RESPONSE,
     );
     const listResponse = ListZonesResponse.decode(listPayload);
+    expect(listResponse.zones.length).toBeGreaterThan(0);
     const zoneId = listResponse.zones[0].id;
 
     client.send(
@@ -131,11 +132,22 @@ describe("PlantOS Admin Protocol", () => {
   });
 
   it("should get statistics", async () => {
+    client.send(
+      MessageType.MSG_LIST_ZONES_REQUEST,
+      ListZonesRequest.create({}),
+      ListZonesRequest,
+    );
+    const listPayload = await client.waitForMessage(
+      MessageType.MSG_LIST_ZONES_RESPONSE,
+    );
+    const listResponse = ListZonesResponse.decode(listPayload);
+    const zoneId = listResponse.zones[0].id;
+
     const now = Math.floor(Date.now() / 1000);
     client.send(
       MessageType.MSG_GET_STATISTICS_REQUEST,
       GetStatisticsRequest.create({
-        zoneId: 1,
+        zoneId,
         from: { seconds: now - 3600 },
         to: { seconds: now },
       }),
@@ -146,14 +158,25 @@ describe("PlantOS Admin Protocol", () => {
       MessageType.MSG_GET_STATISTICS_RESPONSE,
     );
     const response = GetStatisticsResponse.decode(payload);
-    expect(response.zoneId).toBe(1);
+    expect(response.zoneId).toBe(zoneId);
     expect(response.statistics).toBeDefined();
   });
 
   it("should get and update zone settings", async () => {
     client.send(
+      MessageType.MSG_LIST_ZONES_REQUEST,
+      ListZonesRequest.create({}),
+      ListZonesRequest,
+    );
+    const listPayload = await client.waitForMessage(
+      MessageType.MSG_LIST_ZONES_RESPONSE,
+    );
+    const listResponse = ListZonesResponse.decode(listPayload);
+    const zoneId = listResponse.zones[0].id;
+
+    client.send(
       MessageType.MSG_GET_ZONE_SETTINGS_REQUEST,
-      GetZoneSettingsRequest.create({ zoneId: 1 }),
+      GetZoneSettingsRequest.create({ zoneId }),
       GetZoneSettingsRequest,
     );
     const getPayload = await client.waitForMessage(
@@ -179,8 +202,19 @@ describe("PlantOS Admin Protocol", () => {
 
   it("should water a zone", async () => {
     client.send(
+      MessageType.MSG_LIST_ZONES_REQUEST,
+      ListZonesRequest.create({}),
+      ListZonesRequest,
+    );
+    const listPayload = await client.waitForMessage(
+      MessageType.MSG_LIST_ZONES_RESPONSE,
+    );
+    const listResponse = ListZonesResponse.decode(listPayload);
+    const zoneId = listResponse.zones[0].id;
+
+    client.send(
       MessageType.MSG_WATER_ZONE_REQUEST,
-      WaterZoneRequest.create({ zoneId: 1 }),
+      WaterZoneRequest.create({ zoneId }),
       WaterZoneRequest,
     );
     const payload = await client.waitForMessage(
@@ -192,8 +226,19 @@ describe("PlantOS Admin Protocol", () => {
 
   it("should pause and resume a zone", async () => {
     client.send(
+      MessageType.MSG_LIST_ZONES_REQUEST,
+      ListZonesRequest.create({}),
+      ListZonesRequest,
+    );
+    const listPayload = await client.waitForMessage(
+      MessageType.MSG_LIST_ZONES_RESPONSE,
+    );
+    const listResponse = ListZonesResponse.decode(listPayload);
+    const zoneId = listResponse.zones[0].id;
+
+    client.send(
       MessageType.MSG_PAUSE_ZONE_REQUEST,
-      PauseZoneRequest.create({ zoneId: 1 }),
+      PauseZoneRequest.create({ zoneId }),
       PauseZoneRequest,
     );
     const pausePayload = await client.waitForMessage(
@@ -204,7 +249,7 @@ describe("PlantOS Admin Protocol", () => {
 
     client.send(
       MessageType.MSG_RESUME_ZONE_REQUEST,
-      ResumeZoneRequest.create({ zoneId: 1 }),
+      ResumeZoneRequest.create({ zoneId }),
       ResumeZoneRequest,
     );
     const resumePayload = await client.waitForMessage(
