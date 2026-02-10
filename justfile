@@ -36,8 +36,3 @@ proto-clean:
     rm -rf {{SHARED_OUT}}
     @echo "Cleaned generated code directories"
 
-proto-check-tools:
-    @echo "Checking required tools..."
-    @which protoc > /dev/null && echo "  protoc: OK ($(protoc --version))" || echo "  protoc: NOT FOUND - Install protobuf compiler"
-    @which protoc-gen-kotlin > /dev/null 2>&1 && echo "  protoc-gen-kotlin: OK" || echo "  protoc-gen-kotlin: OK (built into protoc)"
-    @which protoc-gen-ts > /dev/null 2>&1 && echo "  protoc-gen-ts: OK" || echo "  protoc-gen-ts: NOT FOUND - Install with: npm install -g ts-protoc-gen"
