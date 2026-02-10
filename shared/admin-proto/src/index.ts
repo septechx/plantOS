@@ -34,6 +34,35 @@ export const MessageType = {
 
 export type MessageTypeValue = (typeof MessageType)[keyof typeof MessageType];
 
+const MESSAGE_TYPE_NAMES: { [key: number]: string } = {
+  [MessageType.MSG_HELLO]: "Hello",
+  [MessageType.MSG_LIST_MODULES_REQUEST]: "ListModulesRequest",
+  [MessageType.MSG_GET_MODULE_REQUEST]: "GetModuleRequest",
+  [MessageType.MSG_LIST_ZONES_REQUEST]: "ListZonesRequest",
+  [MessageType.MSG_GET_ZONE_REQUEST]: "GetZoneRequest",
+  [MessageType.MSG_GET_STATISTICS_REQUEST]: "GetStatisticsRequest",
+  [MessageType.MSG_WATER_ZONE_REQUEST]: "WaterZoneRequest",
+  [MessageType.MSG_PAUSE_ZONE_REQUEST]: "PauseZoneRequest",
+  [MessageType.MSG_RESUME_ZONE_REQUEST]: "ResumeZoneRequest",
+  [MessageType.MSG_GET_ZONE_SETTINGS_REQUEST]: "GetZoneSettingsRequest",
+  [MessageType.MSG_UPDATE_ZONE_SETTINGS_REQUEST]: "UpdateZoneSettingsRequest",
+  [MessageType.MSG_WELCOME]: "Welcome",
+  [MessageType.MSG_LIST_MODULES_RESPONSE]: "ListModulesResponse",
+  [MessageType.MSG_GET_MODULE_RESPONSE]: "GetModuleResponse",
+  [MessageType.MSG_LIST_ZONES_RESPONSE]: "ListZonesResponse",
+  [MessageType.MSG_GET_ZONE_RESPONSE]: "GetZoneResponse",
+  [MessageType.MSG_GET_STATISTICS_RESPONSE]: "GetStatisticsResponse",
+  [MessageType.MSG_WATER_ZONE_RESPONSE]: "WaterZoneResponse",
+  [MessageType.MSG_PAUSE_ZONE_RESPONSE]: "PauseZoneResponse",
+  [MessageType.MSG_RESUME_ZONE_RESPONSE]: "ResumeZoneResponse",
+  [MessageType.MSG_GET_ZONE_SETTINGS_RESPONSE]: "GetZoneSettingsResponse",
+  [MessageType.MSG_UPDATE_ZONE_SETTINGS_RESPONSE]: "UpdateZoneSettingsResponse",
+  [MessageType.MSG_ZONE_UPDATE]: "ZoneUpdate",
+  [MessageType.MSG_MODULE_UPDATE]: "ModuleUpdate",
+  [MessageType.MSG_STATISTICS_UPDATE]: "StatisticsUpdate",
+  [MessageType.MSG_ERROR_RESPONSE]: "ErrorResponse",
+};
+
 export function createMessagePrefix(messageType: number): Uint8Array {
   const buffer = new ArrayBuffer(4);
   const view = new DataView(buffer);
@@ -73,36 +102,7 @@ export function parseMessage(
 }
 
 export function getMessageTypeName(messageType: number): string {
-  const names: { [key: number]: string } = {
-    [MessageType.MSG_HELLO]: "Hello",
-    [MessageType.MSG_LIST_ZONES_REQUEST]: "ListZonesRequest",
-    [MessageType.MSG_GET_ZONE_REQUEST]: "GetZoneRequest",
-    [MessageType.MSG_GET_STATISTICS_REQUEST]: "GetStatisticsRequest",
-    [MessageType.MSG_LIST_MODULES_REQUEST]: "ListModulesRequest",
-    [MessageType.MSG_GET_MODULE_REQUEST]: "GetModuleRequest",
-    [MessageType.MSG_WATER_ZONE_REQUEST]: "WaterZoneRequest",
-    [MessageType.MSG_PAUSE_ZONE_REQUEST]: "PauseZoneRequest",
-    [MessageType.MSG_RESUME_ZONE_REQUEST]: "ResumeZoneRequest",
-    [MessageType.MSG_GET_ZONE_SETTINGS_REQUEST]: "GetZoneSettingsRequest",
-    [MessageType.MSG_UPDATE_ZONE_SETTINGS_REQUEST]: "UpdateZoneSettingsRequest",
-    [MessageType.MSG_WELCOME]: "Welcome",
-    [MessageType.MSG_LIST_ZONES_RESPONSE]: "ListZonesResponse",
-    [MessageType.MSG_GET_ZONE_RESPONSE]: "GetZoneResponse",
-    [MessageType.MSG_GET_STATISTICS_RESPONSE]: "GetStatisticsResponse",
-    [MessageType.MSG_LIST_MODULES_RESPONSE]: "ListModulesResponse",
-    [MessageType.MSG_GET_MODULE_RESPONSE]: "GetModuleResponse",
-    [MessageType.MSG_WATER_ZONE_RESPONSE]: "WaterZoneResponse",
-    [MessageType.MSG_PAUSE_ZONE_RESPONSE]: "PauseZoneResponse",
-    [MessageType.MSG_RESUME_ZONE_RESPONSE]: "ResumeZoneResponse",
-    [MessageType.MSG_GET_ZONE_SETTINGS_RESPONSE]: "GetZoneSettingsResponse",
-    [MessageType.MSG_UPDATE_ZONE_SETTINGS_RESPONSE]:
-      "UpdateZoneSettingsResponse",
-    [MessageType.MSG_ZONE_UPDATE]: "ZoneUpdate",
-    [MessageType.MSG_MODULE_UPDATE]: "ModuleUpdate",
-    [MessageType.MSG_STATISTICS_UPDATE]: "StatisticsUpdate",
-    [MessageType.MSG_ERROR_RESPONSE]: "ErrorResponse",
-  };
-  return names[messageType] || `Unknown(${messageType})`;
+  return MESSAGE_TYPE_NAMES[messageType] || `Unknown(${messageType})`;
 }
 
 // Re-export enums for easier access
