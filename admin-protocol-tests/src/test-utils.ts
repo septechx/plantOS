@@ -53,9 +53,6 @@ export class TestClient {
 
     // Create new WebSocket if none exists or it's closed
     this.ws = new WebSocket(URL);
-    this.ws.on("open", () => {
-      this.isConnected = true;
-    });
     this.ws.on("message", (data: Buffer) => this.handleMessage(data));
     this.ws.on("error", (err) => console.error("WS Error:", err));
 
@@ -66,6 +63,7 @@ export class TestClient {
       );
       this.ws!.once("open", () => {
         clearTimeout(timeout);
+        this.isConnected = true;
         resolve();
       });
       this.ws!.once("error", (err) => {
