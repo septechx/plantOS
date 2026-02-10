@@ -274,7 +274,7 @@ message ErrorResponse {
   string message = 2;
 
   // Optional: request that caused the error
-  string request_type = 3;
+  MessageType request_type = 3;
 }
 
 // Message type identifiers (4-byte prefix)
