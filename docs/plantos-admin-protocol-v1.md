@@ -22,6 +22,217 @@ The PlantOS Admin Protocol enables communication between the PlantOS client appl
 - No additional authentication tokens required (security handled by TLS + pre-shared key)
 - QR code contains: `hub_id`, `encryption_key`, `hub_address`
 
+### 1.3 Encryption Key Specification
+
+The `encryption_key` is a symmetric message-level encryption key used to provide end-to-end encryption layered on top of TLS. This ensures confidentiality even if the TLS connection is compromised.
+
+#### 1.3.1 Role and Purpose
+
+The `encryption_key` serves as:
+
+- **Application-layer encryption key**: Protects message payloads after TLS encryption
+- **Defense in depth**: Provides confidentiality if TLS is compromised (e.g., compromised CA, MITM with stolen certs)
+- **Mutual authentication**: Both parties must possess the same key to communicate
+
+**Important**: This is NOT a TLS-PSK identity or secret. Standard TLS certificates are used for transport security; the `encryption_key` is used for message-level encryption within the application protocol.
+
+#### 1.3.2 Format and Generation
+
+- **Length**: 32 bytes (256 bits)
+- **Encoding**: Base64 URL-safe encoding (RFC 4648, no padding)
+- **Generation**: Cryptographically secure random (CSPRNG)
+- **Example**: `dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk`
+
+#### 1.3.3 Key Derivation and Usage
+
+All encrypted messages use **AES-256-GCM** with authenticated encryption. The encryption flow:
+
+```
+encryption_key (32 bytes)
+    |
+    v
+HKDF-SHA256 (salt=session_id, info="plantos-v1-message-key")
+    |
+    v
+Derived Key (32 bytes) + Nonce (12 bytes)
+    |
+    v
+AES-256-GCM(plaintext) -> ciphertext + auth_tag (16 bytes)
+```
+
+**Message Encryption Format**:
+
+- 4 bytes: Message type identifier (uint32) - unencrypted header
+- 12 bytes: Nonce (random per message) - sent in clear
+- N bytes: Ciphertext (encrypted protobuf payload)
+- 16 bytes: GCM authentication tag
+
+**Per-Session Key Derivation**:
+After the `Hello`/`Welcome` handshake establishes a unique `session_id`:
+
+```
+derived_key = HKDF-SHA256(
+    ikm: encryption_key,
+    salt: session_id,
+    info: "plantos-v1-message-key",
+    length: 32
+)
+```
+
+This ensures:
+
+- Different session = different derived key (forward secrecy per session)
+- Compromised session cannot decrypt other sessions
+- Replay protection via unique session IDs
+
+#### 1.3.4 Algorithms and Parameters
+
+| Component         | Algorithm   | Parameters                                        |
+| ----------------- | ----------- | ------------------------------------------------- |
+| Key Derivation    | HKDF-SHA256 | Salt=session_id, info="plantos-v1-message-key"    |
+| Encryption        | AES-256-GCM | Key=32 bytes, Nonce=12 bytes random, Tag=16 bytes |
+| Random Generation | CSPRNG      | `/dev/urandom` or platform equivalent             |
+
+**Security Requirements**:
+
+- GCM nonces MUST be unique per message within a session (use CSPRNG, 96-bit random)
+- Maximum messages per session: 2^32 (to avoid nonce reuse risk)
+- Session ID must be unique and unpredictable (128-bit minimum entropy)
+
+#### 1.3.5 Storage, Lifetime, and Rotation
+
+**Client Storage**:
+
+- Store in platform secure storage (iOS Keychain, Android Keystore, Windows DPAPI, macOS Keychain)
+- Never write to unencrypted persistent storage
+- Clear from memory when app backgrounded (if possible)
+
+**Hub Storage**:
+
+- Store in encrypted database or HSM (Hardware Security Module) if available
+
+#### 1.3.6 QR Code Payload Format
+
+The QR code contains a JSON object with three required fields:
+
+```json
+{
+  "v": 1,
+  "hub_id": "hub-abc123",
+  "hub_address": "wss://192.168.1.100:443/v1/admin",
+  "key": "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+}
+```
+
+**Field Definitions**:
+
+| Field         | Type    | Description                                    |
+| ------------- | ------- | ---------------------------------------------- |
+| `v`           | integer | Payload format version (current: 1)            |
+| `hub_id`      | string  | Unique hub identifier (alphanumeric + hyphens) |
+| `hub_address` | string  | WebSocket URL (wss:// or ws:// for local)      |
+| `key`         | string  | Base64 URL-safe encoded 32-byte encryption key |
+
+**Encoding**:
+
+- JSON minified (no whitespace)
+- UTF-8 encoded
+- QR Code: Model 2, Error Correction Level M (15% redundancy)
+- Maximum payload: ~2,953 bytes (QR Code version 40) - typically under 200 bytes
+
+#### 1.3.7 Example Usage Scenarios
+
+**Scenario 1: Client Connects to Hub**
+
+```javascript
+// 1. Scan QR code
+const qrPayload = JSON.parse(qrCodeData);
+// { v: 1, hub_id: "hub-abc123", hub_address: "wss://192.168.1.100:443/v1/admin", key: "..." }
+
+// 2. Establish WebSocket (TLS only)
+const ws = new WebSocket(qrPayload.hub_address, "plantos-protobuf");
+
+// 3. On connection, send Hello (unencrypted - no session yet)
+ws.send(encodeMessage(MSG_HELLO, Hello.encode({ protocol_version: "1.0" })));
+
+// 4. Receive Welcome with session_id
+const { session_id } = Welcome.decode(payload);
+
+// 5. Derive session key
+derivedKey = hkdfSha256(
+  base64UrlDecode(qrPayload.key),
+  session_id,
+  "plantos-v1-message-key",
+  32,
+);
+
+// 6. All subsequent messages encrypted
+function sendEncrypted(msgType, protobufMsg) {
+  const plaintext = protobufMsg.finish();
+  const nonce = crypto.getRandomValues(new Uint8Array(12));
+  const { ciphertext, tag } = aesGcmEncrypt(derivedKey, nonce, plaintext);
+  return encodeEncryptedMessage(msgType, nonce, ciphertext, tag);
+}
+
+// 7. Decrypt incoming messages
+function decryptMessage(data) {
+  const { msgType, nonce, ciphertext, tag } = parseEncryptedMessage(data);
+  return aesGcmDecrypt(derivedKey, nonce, ciphertext, tag);
+}
+```
+
+**Scenario 2: Hub Handles Encrypted Messages**
+
+```python
+# 1. Client connects, send Welcome with unique session_id
+session_id = secrets.token_bytes(16)  # 128-bit random
+ws.send(encode_message(MSG_WELCOME, Welcome(session_id=session_id)))
+
+# 2. Look up encryption_key for this hub_id
+encryption_key = get_key_for_hub(hub_id)  # From secure storage
+
+# 3. Derive session key
+derived_key = hkdf_sha256(
+    ikm=encryption_key,
+    salt=session_id,
+    info=b"plantos-v1-message-key",
+    length=32
+)
+
+# 4. Store in session context
+sessions[session_id] = { "derived_key": derived_key, ... }
+
+# 5. Decrypt incoming messages
+def on_message(data):
+    msg_type, nonce, ciphertext, tag = parse_message(data)
+    plaintext = aes_gcm_decrypt(derived_key, nonce, ciphertext, tag)
+    protobuf_msg = decode_protobuf(msg_type, plaintext)
+    handle_message(protobuf_msg)
+
+# 6. Encrypt outgoing broadcasts (same key for all clients of this hub)
+def broadcast(zone_update):
+    for session in sessions.values():
+        nonce = os.urandom(12)
+        ciphertext, tag = aes_gcm_encrypt(
+            session["derived_key"], nonce, zone_update.serialize()
+        )
+        session.ws.send(encode_encrypted(MSG_ZONE_UPDATE, nonce, ciphertext, tag))
+```
+
+**Scenario 3: Interoperability Checklist**
+
+When implementing the QR payload:
+
+- [ ] Generate 32 random bytes using CSPRNG
+- [ ] Encode using Base64 URL-safe alphabet (RFC 4648 section 5)
+- [ ] Omit Base64 padding characters (=)
+- [ ] Validate decoded key is exactly 32 bytes
+- [ ] Use HKDF-SHA256 with session_id as salt
+- [ ] Use AES-256-GCM with 12-byte random nonce per message
+- [ ] Verify GCM authentication tag before decrypting
+- [ ] Reject messages with reused nonces within same session
+- [ ] Support graceful key rotation with overlap period
+
 ## 2. Transport Layer
 
 ### 2.1 WebSocket Connection
