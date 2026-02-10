@@ -45,7 +45,7 @@ async function getFirstZoneId(client: TestClient): Promise<number> {
 
 describe("PlantOS Admin Protocol", () => {
   let client: TestClient;
-  let welcome: any;
+  let welcome: v1.Welcome;
 
   beforeAll(async () => {
     client = new TestClient();
