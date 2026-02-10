@@ -29,10 +29,12 @@ const {
 
 describe("PlantOS Admin Protocol", () => {
   let client: TestClient;
+  let welcome: any;
 
   beforeAll(async () => {
     client = new TestClient();
     await client.connect();
+    welcome = await client.handshake();
   });
 
   afterAll(() => {
@@ -40,7 +42,6 @@ describe("PlantOS Admin Protocol", () => {
   });
 
   it("should complete handshake", async () => {
-    const welcome = await client.handshake();
     expect(welcome.hubId).toBeDefined();
     expect(welcome.hubVersion).toBeDefined();
   });
