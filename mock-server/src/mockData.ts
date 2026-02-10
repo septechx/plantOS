@@ -48,6 +48,33 @@ const ZONE_DEFINITIONS = [
   },
 ];
 
+const MODULE_DEFINITIONS = [
+  {
+    id: 1,
+    name: "Main Module",
+    status: Status.STATUS_IDLE,
+    batteryLevel: 85,
+    zoneIds: [0, 1, 2, 3, 4],
+    lastSeen: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
+  },
+  {
+    id: 2,
+    name: "Secondary Module",
+    status: Status.STATUS_WORKING,
+    batteryLevel: 72,
+    zoneIds: [0, 2, 4],
+    lastSeen: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
+  },
+  {
+    id: 3,
+    name: "Expansion Module",
+    status: Status.STATUS_IDLE,
+    batteryLevel: 95,
+    zoneIds: [1, 3],
+    lastSeen: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
+  },
+];
+
 const BASE_STATISTICS = [
   {
     temperature: [21, 22, 22.5, 23, 22.5, 22, 21.5],
@@ -266,18 +293,16 @@ export function getCurrentStatistics(zoneId: number): v1.Statistic[] {
 }
 
 export function getModules(): v1.Module[] {
-  const module = new Module();
-  module.id = 1;
-  module.name = "Main Module";
-  module.status = Status.STATUS_IDLE;
-  module.batteryLevel = 85;
-  module.zoneIds = [0, 1, 2, 3, 4];
-  module.lastSeen = Timestamp.fromObject({
-    seconds: Math.floor(Date.now() / 1000),
-    nanos: 0,
+  return MODULE_DEFINITIONS.map((def) => {
+    const module = new Module();
+    module.id = def.id;
+    module.name = def.name;
+    module.status = def.status;
+    module.batteryLevel = def.batteryLevel;
+    module.zoneIds = def.zoneIds;
+    module.lastSeen = Timestamp.fromObject(def.lastSeen);
+    return module;
   });
-
-  return [module];
 }
 
 export function getModuleById(moduleId: number): v1.Module | undefined {
