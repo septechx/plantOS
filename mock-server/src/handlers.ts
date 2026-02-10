@@ -214,6 +214,21 @@ function handleGetModuleRequest(data: Uint8Array): Uint8Array {
   );
 }
 
+function handleNotImplemented(
+  data: Uint8Array,
+  messageType: number,
+): Uint8Array {
+  console.warn(`Message type not implemented: ${messageType}`);
+  const error = new ErrorResponse();
+  error.code = ErrorCode.ERROR_CODE_INVALID_REQUEST;
+  error.message = `Message type ${messageType} is not yet implemented in this mock server`;
+  error.requestType = messageType;
+  return encodeMessage(
+    MessageType.MSG_ERROR_RESPONSE,
+    ErrorResponse.encode(error).finish(),
+  );
+}
+
 export function createStatisticsUpdate(zoneId: number): Uint8Array {
   const update = new StatisticsUpdate();
   update.zoneId = zoneId;
@@ -240,6 +255,15 @@ const handlers: Map<number, MessageHandler> = new Map([
   [MessageType.MSG_GET_MODULE_REQUEST, handleGetModuleRequest],
 ]);
 
+// Request types that are recognized but not yet implemented
+const unimplementedRequests = [
+  MessageType.MSG_WATER_ZONE_REQUEST,
+  MessageType.MSG_PAUSE_ZONE_REQUEST,
+  MessageType.MSG_RESUME_ZONE_REQUEST,
+  MessageType.MSG_GET_ZONE_SETTINGS_REQUEST,
+  MessageType.MSG_UPDATE_ZONE_SETTINGS_REQUEST,
+];
+
 export function routeMessage(
   messageType: number,
   data: Uint8Array,
@@ -247,6 +271,10 @@ export function routeMessage(
   const handler = handlers.get(messageType);
   if (handler) {
     return handler(data);
+  }
+
+  if (unimplementedRequests.includes(messageType)) {
+    return handleNotImplemented(data, messageType);
   }
 
   console.warn(`Unknown message type: ${messageType}`);
