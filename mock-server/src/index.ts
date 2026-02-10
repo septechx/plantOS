@@ -1,7 +1,7 @@
 import { WebSocketServer, WebSocket } from "ws";
 import { parseMessage, getMessageTypeName } from "@plantos/admin-proto";
 import { routeMessage, createStatisticsUpdate } from "./handlers";
-import { getZones, initializeMockData } from "./mockData";
+import { getZones, initializeMockData, updateStatistics } from "./mockData";
 
 initializeMockData();
 
@@ -23,6 +23,7 @@ function startBroadcasts(): NodeJS.Timeout {
     if (clients.size === 0) return;
 
     const zones = getZones();
+    updateStatistics();
     zones.forEach((zone) => {
       const update = createStatisticsUpdate(zone.id);
       broadcast(update);

@@ -12,7 +12,6 @@ import {
   getModules,
   getModuleById,
   getCurrentStatistics,
-  updateStatistics,
 } from "./mockData";
 
 const {
@@ -216,8 +215,6 @@ function handleGetModuleRequest(data: Uint8Array): Uint8Array {
 }
 
 export function createStatisticsUpdate(zoneId: number): Uint8Array {
-  updateStatistics();
-
   const update = new StatisticsUpdate();
   update.zoneId = zoneId;
   update.updatedStatistics = getCurrentStatistics(zoneId);
