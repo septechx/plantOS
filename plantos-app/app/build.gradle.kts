@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.protobuf)
 }
 
 android {
@@ -29,19 +30,44 @@ android {
         }
     }
 
-    sourceSets {
-        getByName("main") {
-            java {
-                srcDirs("src/main/proto-generated")
-            }
-        }
-    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
         compose = true
+    }
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:4.30.0"
+    }
+    plugins {
+        create("kotlin") {
+            artifact = "com.google.protobuf:protoc-gen-kotlin:4.30.0"
+        }
+    }
+    sourceSets {
+        main {
+            proto {
+                srcDir("../../../proto")
+            }
+        }
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                create("java") {
+                    option("lite")
+                }
+            }
+            task.plugins {
+                create("kotlin") {
+                    option("lite")
+                }
+            }
+        }
     }
 }
 
