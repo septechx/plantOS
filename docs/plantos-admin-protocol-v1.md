@@ -548,6 +548,8 @@ message ErrorResponse {
 // Used for message routing
 
 enum MessageType {
+  MESSAGE_TYPE_UNSPECIFIED = 0;
+
   // Client -> Hub
   MSG_HELLO = 1;
   MSG_LIST_MODULES_REQUEST = 2;
