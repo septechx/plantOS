@@ -81,7 +81,7 @@ derived_key = HKDF-SHA256(
 
 This ensures:
 
-- Different session = different derived key (forward secrecy per session)
+- Different session = different derived key (session key isolation)
 - Compromised session cannot decrypt other sessions
 - Replay protection via unique session IDs
 
@@ -97,6 +97,7 @@ This ensures:
 
 - GCM nonces MUST be unique per message within a session (use CSPRNG, 96-bit random)
 - Maximum messages per session: 2^32 (to avoid nonce reuse risk)
+  - **Enforcement**: Both sender and receiver maintain a per-session monotonic 32-bit counter, incremented on each encrypted/decrypted message. Before encrypting or decrypting, the counter MUST be checked; if it has reached 2^32, the session MUST be terminated immediately (close connection and initiate session rotation). This enforcement is local to each endpoint—no cross-node coordination is required. The 96-bit nonce requirement (above) provides defense-in-depth, but the counter limit is the primary safeguard against nonce collision due to counter overflow.
 - Session ID must be unique and unpredictable (128-bit minimum entropy)
 
 #### 1.3.5 Storage, Lifetime, and Rotation
@@ -113,7 +114,7 @@ This ensures:
 
 #### 1.3.6 QR Code Payload Format
 
-The QR code contains a JSON object with three required fields:
+The QR code contains a JSON object with four required fields:
 
 ```json
 {

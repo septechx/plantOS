@@ -25,9 +25,27 @@ const ZONE_DEFINITIONS = [
     status: Status.STATUS_WORKING,
     daysAgo: 0,
   },
-  { id: 2, name: "Snake Plant", icon: "🌿", status: Status.STATUS_IDLE, daysAgo: 7 },
-  { id: 3, name: "Peace Lily", icon: "🌿", status: Status.STATUS_PAUSED, daysAgo: 1 },
-  { id: 4, name: "Aloe Vera", icon: "🌿", status: Status.STATUS_IDLE, daysAgo: 5 },
+  {
+    id: 2,
+    name: "Snake Plant",
+    icon: "🌿",
+    status: Status.STATUS_IDLE,
+    daysAgo: 7,
+  },
+  {
+    id: 3,
+    name: "Peace Lily",
+    icon: "🌿",
+    status: Status.STATUS_PAUSED,
+    daysAgo: 1,
+  },
+  {
+    id: 4,
+    name: "Aloe Vera",
+    icon: "🌿",
+    status: Status.STATUS_IDLE,
+    daysAgo: 5,
+  },
 ];
 
 const BASE_STATISTICS = [
@@ -71,6 +89,7 @@ let currentStatistics: {
 export function initializeMockData(): void {
   ZONE_DEFINITIONS.forEach((zone, index) => {
     const base = BASE_STATISTICS[index];
+    if (!base) return;
     currentStatistics[zone.id] = {
       temperature: base.temperature[base.temperature.length - 1],
       humidity: base.humidity[base.humidity.length - 1],
@@ -159,7 +178,7 @@ function createStatistic(
 
 function buildStatisticsFromCurrent(
   current: { temperature: number; humidity: number; light: number },
-  nowTimestamp: ReturnType<typeof Timestamp.fromObject>
+  nowTimestamp: ReturnType<typeof Timestamp.fromObject>,
 ): v1.Statistic[] {
   // Temperature
   const tempStat = new Statistic();
@@ -207,7 +226,10 @@ export function getZones(): v1.Zone[] {
         nanos: (now.getTime() % 1000) * 1_000_000,
       });
 
-      zone.currentStatistics = buildStatisticsFromCurrent(current, nowTimestamp);
+      zone.currentStatistics = buildStatisticsFromCurrent(
+        current,
+        nowTimestamp,
+      );
     }
 
     return zone;
