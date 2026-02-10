@@ -308,5 +308,3 @@ export function getModules(): v1.Module[] {
 export function getModuleById(moduleId: number): v1.Module | undefined {
   return getModules().find((m) => m.id === moduleId);
 }
-
-initializeMockData();

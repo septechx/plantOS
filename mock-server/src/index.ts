@@ -1,7 +1,9 @@
 import { WebSocketServer, WebSocket } from "ws";
 import { parseMessage, getMessageTypeName } from "@plantos/admin-proto";
 import { routeMessage, createStatisticsUpdate } from "./handlers";
-import { getZones } from "./mockData";
+import { getZones, initializeMockData } from "./mockData";
+
+initializeMockData();
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8080;
 const BROADCAST_INTERVAL = 5000; // 5 seconds
