@@ -80,7 +80,7 @@ export class TestClient {
     this.messageWaiters = [];
   }
 
-  send(type: number, message: any, encoder: any) {
+  send<T>(type: number, message: T, encoder: { encode(msg: T): { finish(): Uint8Array } }): void {
     if (!this.ws) throw new Error("WebSocket not connected");
     const payload = encoder.encode(message).finish();
     this.ws.send(encodeMessage(type, payload));
