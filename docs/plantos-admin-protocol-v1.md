@@ -47,7 +47,7 @@ The `encryption_key` serves as:
 
 All encrypted messages use **AES-256-GCM** with authenticated encryption. The encryption flow:
 
-```
+```text
 encryption_key (32 bytes)
     |
     v
@@ -70,7 +70,7 @@ AES-256-GCM(plaintext) -> ciphertext + auth_tag (16 bytes)
 **Per-Session Key Derivation**:
 After the `Hello`/`Welcome` handshake establishes a unique `session_id`:
 
-```
+```text
 derived_key = HKDF-SHA256(
     ikm: encryption_key,
     salt: session_id,
@@ -766,13 +766,14 @@ All errors return `ErrorResponse` with:
 1. User installs PlantOS hub hardware
 2. Hub generates unique ID and encryption key
 3. Hub displays QR code containing:
-   ```
-   {
-     "hub_id": "hub-abc123",
-     "hub_address": "wss://192.168.1.100:443/v1/admin",
-     "encryption_key": "base64-encoded-key"
-   }
-   ```
+
+```json
+{
+  "hub_id": "hub-abc123",
+  "hub_address": "wss://192.168.1.100:443/v1/admin",
+  "encryption_key": "base64-encoded-key"
+}
+```
 
 ### 6.2 Client Onboarding
 
@@ -824,7 +825,7 @@ All errors return `ErrorResponse` with:
 
 ## Appendix A: Example Message Flow
 
-```
+```text
 Client                                    Hub
   |                                         |
   |----- WSS CONNECT wss://hub:443/v1/admin |
