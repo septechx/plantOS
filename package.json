@@ -1,0 +1,17 @@
+{
+  "name": "plantos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PlantOS monorepo",
+  "scripts": {
+    "prepare": "husky",
+    "typecheck": "pnpm -r typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "pnpm run typecheck && pnpm run format:check"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "prettier": "^3.8.1"
+  }
+}

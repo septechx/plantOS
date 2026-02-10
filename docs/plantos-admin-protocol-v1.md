@@ -248,12 +248,14 @@ When implementing the QR payload:
 The protocol uses two framing formats depending on the connection state:
 
 **1. Unencrypted Framing** (Handshake phase):
+
 - **4 bytes**: Message type identifier (uint32, little-endian)
 - **N bytes**: Protobuf serialized message payload
 
 This framing applies ONLY to `Hello` and `Welcome`/`Error` messages during the initial handshake.
 
 **2. Encrypted Framing** (Post-handshake phase):
+
 - Follows the structure defined in [Section 1.3.3 (Message Format)](#133-message-format).
 - **4 bytes**: Message type identifier (uint32, little-endian)
 - **12 bytes**: GCM nonce

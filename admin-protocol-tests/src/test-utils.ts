@@ -19,7 +19,7 @@ export class TestClient {
     [];
   isConnected: boolean = false;
 
-  constructor() { }
+  constructor() {}
 
   async connect(): Promise<void> {
     // Return immediately if already connected and open
@@ -80,7 +80,11 @@ export class TestClient {
     this.messageWaiters = [];
   }
 
-  send<T>(type: number, message: T, encoder: { encode(msg: T): { finish(): Uint8Array } }): void {
+  send<T>(
+    type: number,
+    message: T,
+    encoder: { encode(msg: T): { finish(): Uint8Array } },
+  ): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       throw new Error("WebSocket not connected or not open");
     }

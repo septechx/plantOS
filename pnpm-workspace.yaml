@@ -1,4 +1,4 @@
 packages:
-  - 'admin-protocol-tests'
-  - 'mock-server'
-  - 'shared/*'
+  - "admin-protocol-tests"
+  - "mock-server"
+  - "shared/*"

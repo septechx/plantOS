@@ -238,9 +238,11 @@ export function getZones(): v1.Zone[] {
   return ZONE_DEFINITIONS.map((def, index) => {
     const zone = new Zone();
     zone.id = def.id;
-    
+
     // Find which module contains this zone
-    const parentModule = MODULE_DEFINITIONS.find(m => m.zoneIds.includes(def.id));
+    const parentModule = MODULE_DEFINITIONS.find((m) =>
+      m.zoneIds.includes(def.id),
+    );
     zone.moduleId = parentModule ? parentModule.id : 0;
 
     zone.name = def.name;
