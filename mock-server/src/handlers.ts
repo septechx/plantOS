@@ -134,6 +134,17 @@ function handleGetStatisticsRequest(data: Uint8Array): Uint8Array {
     );
   }
 
+  if (Boolean(from) !== Boolean(to)) {
+    const error = new ErrorResponse();
+    error.code = ErrorCode.ERROR_CODE_INVALID_TIME_RANGE;
+    error.message = "Invalid time range: both from and to are required";
+    error.requestType = MessageType.MSG_GET_STATISTICS_REQUEST;
+    return encodeMessage(
+      MessageType.MSG_ERROR_RESPONSE,
+      ErrorResponse.encode(error).finish(),
+    );
+  }
+
   if (from && to) {
     const fromTime = timestampToMillis(from);
     const toTime = timestampToMillis(to);

@@ -25,13 +25,15 @@ jobs:
           cache: "pnpm"
 
       - name: Install just
-        run: sudo apt-get update && sudo apt-get install -y just
+        run: |
+          curl --proto '=https' --tlsv1.2 -fsSL https://github.com/casey/just/releases/download/1.46.0/just-1.46.0-x86_64-unknown-linux-musl.tar.gz | tar -xz -C . just
+          chmod +x ./just
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Compile protobuf definitions
-        run: just proto-generate-shared
+        run: ./just proto-generate-shared
 
       - name: Run TypeScript typecheck
         run: pnpm -r typecheck
