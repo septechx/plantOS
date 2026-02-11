@@ -207,31 +207,21 @@ function buildStatisticsFromCurrent(
   current: { temperature: number; humidity: number; light: number },
   nowTimestamp: ReturnType<typeof Timestamp.fromObject>,
 ): v1.Statistic[] {
-  // Temperature
-  const tempStat = new Statistic();
-  tempStat.type = StatisticType.STATISTIC_TYPE_TEMPERATURE;
-  const tempPoint = new StatisticDataPoint();
-  tempPoint.timestamp = nowTimestamp;
-  tempPoint.value = current.temperature;
-  tempStat.history = [tempPoint];
+  const mapping: Array<[number, keyof typeof current]> = [
+    [StatisticType.STATISTIC_TYPE_TEMPERATURE, "temperature"],
+    [StatisticType.STATISTIC_TYPE_HUMIDITY, "humidity"],
+    [StatisticType.STATISTIC_TYPE_LIGHT, "light"],
+  ];
 
-  // Humidity
-  const humidStat = new Statistic();
-  humidStat.type = StatisticType.STATISTIC_TYPE_HUMIDITY;
-  const humidPoint = new StatisticDataPoint();
-  humidPoint.timestamp = nowTimestamp;
-  humidPoint.value = current.humidity;
-  humidStat.history = [humidPoint];
-
-  // Light
-  const lightStat = new Statistic();
-  lightStat.type = StatisticType.STATISTIC_TYPE_LIGHT;
-  const lightPoint = new StatisticDataPoint();
-  lightPoint.timestamp = nowTimestamp;
-  lightPoint.value = current.light;
-  lightStat.history = [lightPoint];
-
-  return [tempStat, humidStat, lightStat];
+  return mapping.map(([type, key]) => {
+    const stat = new Statistic();
+    stat.type = type;
+    const point = new StatisticDataPoint();
+    point.timestamp = nowTimestamp;
+    point.value = current[key];
+    stat.history = [point];
+    return stat;
+  });
 }
 
 export function getZones(): v1.Zone[] {
@@ -273,11 +263,17 @@ export function getZoneById(zoneId: number): v1.Zone | undefined {
   return getZones().find((z) => z.id === zoneId);
 }
 
+export function getZoneIds(): number[] {
+  return ZONE_DEFINITIONS.map((z) => z.id);
+}
+
 export function getZoneStatistics(zoneId: number): v1.Statistic[] {
   const zoneIndex = ZONE_DEFINITIONS.findIndex((z) => z.id === zoneId);
   if (zoneIndex === -1) return [];
 
   const base = BASE_STATISTICS[zoneIndex];
+  if (!base) return [];
+
   return [
     createStatistic(StatisticType.STATISTIC_TYPE_TEMPERATURE, base.temperature),
     createStatistic(StatisticType.STATISTIC_TYPE_HUMIDITY, base.humidity),

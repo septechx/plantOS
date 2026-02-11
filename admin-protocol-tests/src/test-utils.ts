@@ -48,7 +48,6 @@ export class TestClient {
           });
         });
       }
-      return;
     }
 
     // Create new WebSocket if none exists or it's closed
@@ -127,11 +126,17 @@ export class TestClient {
     }
 
     return new Promise((resolve, reject) => {
+      const waiter = {
+        type: expectedType,
+        resolve: (payload: Uint8Array) => {
+          clearTimeout(timeout);
+          resolve(payload);
+        },
+      };
+
       const timeout = setTimeout(() => {
-        // Remove waiter on timeout
-        const index = this.messageWaiters.findIndex(
-          (w) => w.type === expectedType,
-        );
+        // Remove the exact waiter by identity
+        const index = this.messageWaiters.findIndex((w) => w === waiter);
         if (index !== -1) {
           this.messageWaiters.splice(index, 1);
         }
@@ -142,13 +147,7 @@ export class TestClient {
         );
       }, timeoutMs);
 
-      this.messageWaiters.push({
-        type: expectedType,
-        resolve: (payload) => {
-          clearTimeout(timeout);
-          resolve(payload);
-        },
-      });
+      this.messageWaiters.push(waiter);
     });
   }
 

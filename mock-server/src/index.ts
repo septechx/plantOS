@@ -1,7 +1,12 @@
 import { WebSocketServer, WebSocket } from "ws";
 import { parseMessage, getMessageTypeName } from "@plantos/admin-proto";
 import { routeMessage, createStatisticsUpdate } from "./handlers";
-import { getZones, initializeMockData, updateStatistics } from "./mockData";
+import {
+  getZones,
+  getZoneIds,
+  initializeMockData,
+  updateStatistics,
+} from "./mockData";
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8080;
 const BROADCAST_INTERVAL = 5000; // 5 seconds
@@ -20,10 +25,10 @@ function startBroadcasts(): NodeJS.Timeout {
   return setInterval(() => {
     if (clients.size === 0) return;
 
-    const zones = getZones();
+    const zoneIds = getZoneIds();
     updateStatistics();
-    zones.forEach((zone) => {
-      const update = createStatisticsUpdate(zone.id);
+    zoneIds.forEach((id) => {
+      const update = createStatisticsUpdate(id);
       broadcast(update);
     });
 

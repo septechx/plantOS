@@ -256,7 +256,7 @@ This framing applies ONLY to `Hello` and `Welcome`/`Error` messages during the i
 
 **2. Encrypted Framing** (Post-handshake phase):
 
-- Follows the structure defined in [Section 1.3.3 (Message Format)](#133-message-format).
+- Follows the structure defined in [Section 1.3.3 (Key Derivation and Usage)](#133-key-derivation-and-usage).
 - **4 bytes**: Message type identifier (uint32, little-endian)
 - **12 bytes**: GCM nonce
 - **N bytes**: Ciphertext (Protobuf payload)

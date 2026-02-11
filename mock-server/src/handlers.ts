@@ -32,6 +32,13 @@ const {
 
 const Timestamp = common.protobuf.Timestamp;
 
+function timestampToMillis(ts: {
+  seconds?: number | unknown;
+  nanos?: number | null;
+}): number {
+  return (Number(ts.seconds) || 0) * 1000 + (ts.nanos ?? 0) / 1_000_000;
+}
+
 export type MessageHandler = (data: Uint8Array) => Uint8Array | null;
 
 function handleHello(data: Uint8Array): Uint8Array {
@@ -128,10 +135,8 @@ function handleGetStatisticsRequest(data: Uint8Array): Uint8Array {
   }
 
   if (from && to) {
-    const fromTime =
-      (Number(from.seconds) || 0) * 1000 + (from.nanos || 0) / 1_000_000;
-    const toTime =
-      (Number(to.seconds) || 0) * 1000 + (to.nanos || 0) / 1_000_000;
+    const fromTime = timestampToMillis(from);
+    const toTime = timestampToMillis(to);
     if (fromTime > toTime) {
       const error = new ErrorResponse();
       error.code = ErrorCode.ERROR_CODE_INVALID_TIME_RANGE;
@@ -154,17 +159,13 @@ function handleGetStatisticsRequest(data: Uint8Array): Uint8Array {
   }
 
   if (from && to) {
-    const fromTime =
-      (Number(from.seconds) || 0) * 1000 + (from.nanos || 0) / 1_000_000;
-    const toTime =
-      (Number(to.seconds) || 0) * 1000 + (to.nanos || 0) / 1_000_000;
+    const fromTime = timestampToMillis(from);
+    const toTime = timestampToMillis(to);
 
     statistics.forEach((s) => {
       s.history = s.history.filter((dp) => {
         if (!dp.timestamp) return false;
-        const dpTime =
-          (Number(dp.timestamp.seconds) || 0) * 1000 +
-          (dp.timestamp.nanos || 0) / 1_000_000;
+        const dpTime = timestampToMillis(dp.timestamp);
         return dpTime >= fromTime && dpTime <= toTime;
       });
     });

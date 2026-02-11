@@ -40,7 +40,7 @@ async function getFirstZoneId(client: TestClient): Promise<number> {
   const response = ListZonesResponse.decode(payload);
 
   expect(response.zones.length).toBeGreaterThan(0);
-  return response.zones[0].id!;
+  return response.zones[0].id as number;
 }
 
 describe("PlantOS Admin Protocol", () => {
@@ -95,17 +95,7 @@ describe("PlantOS Admin Protocol", () => {
   });
 
   it("should get specific zone details", async () => {
-    client.send(
-      MessageType.MSG_LIST_ZONES_REQUEST,
-      ListZonesRequest.create({}),
-      ListZonesRequest,
-    );
-    const listPayload = await client.waitForMessage(
-      MessageType.MSG_LIST_ZONES_RESPONSE,
-    );
-    const listResponse = ListZonesResponse.decode(listPayload);
-    expect(listResponse.zones.length).toBeGreaterThan(0);
-    const zoneId = listResponse.zones[0].id;
+    const zoneId = await getFirstZoneId(client);
 
     client.send(
       MessageType.MSG_GET_ZONE_REQUEST,
