@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.wire)
 }
 
 android {
@@ -28,6 +29,7 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -37,7 +39,19 @@ android {
     }
 }
 
+wire {
+    sourcePath {
+        srcDir("../../proto")
+    }
+    kotlin {
+        android = true
+        javaInterop = true
+    }
+}
+
 dependencies {
+    implementation(libs.wire.runtime)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

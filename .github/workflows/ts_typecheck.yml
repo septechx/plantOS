@@ -1,0 +1,41 @@
+name: TypeScript Typecheck
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install just
+        run: |
+          curl --proto '=https' --tlsv1.2 -fsSL https://github.com/casey/just/releases/download/1.46.0/just-1.46.0-x86_64-unknown-linux-musl.tar.gz | tar -xz -C . just
+          chmod +x ./just
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compile protobuf definitions
+        run: ./just proto-generate-shared
+
+      - name: Run TypeScript typecheck
+        run: pnpm -r typecheck

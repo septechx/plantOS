@@ -1,0 +1,20 @@
+{
+  "name": "admin-protocol-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Test suite for PlantOS Admin Protocol",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@plantos/admin-proto": "workspace:*",
+    "ws": "^8.16.0",
+    "protobufjs": "^7.3.0",
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.3.1",
+    "@types/ws": "^8.5.10",
+    "@types/node": "^25.2.2"
+  }
+}
