@@ -208,10 +208,6 @@ export class HandlerRegistry {
       [MessageType.MSG_GET_ZONE_REQUEST]: MessageType.MSG_GET_ZONE_RESPONSE,
       [MessageType.MSG_GET_STATISTICS_REQUEST]:
         MessageType.MSG_GET_STATISTICS_RESPONSE,
-      [MessageType.MSG_WATER_ZONE_REQUEST]: MessageType.MSG_WATER_ZONE_RESPONSE,
-      [MessageType.MSG_PAUSE_ZONE_REQUEST]: MessageType.MSG_PAUSE_ZONE_RESPONSE,
-      [MessageType.MSG_RESUME_ZONE_REQUEST]:
-        MessageType.MSG_RESUME_ZONE_RESPONSE,
       [MessageType.MSG_GET_ZONE_SETTINGS_REQUEST]:
         MessageType.MSG_GET_ZONE_SETTINGS_RESPONSE,
       [MessageType.MSG_UPDATE_ZONE_SETTINGS_REQUEST]:

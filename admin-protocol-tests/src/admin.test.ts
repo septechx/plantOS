@@ -17,12 +17,6 @@ const {
   GetZoneSettingsResponse,
   UpdateZoneSettingsRequest,
   UpdateZoneSettingsResponse,
-  WaterZoneRequest,
-  WaterZoneResponse,
-  PauseZoneRequest,
-  PauseZoneResponse,
-  ResumeZoneRequest,
-  ResumeZoneResponse,
   ErrorResponse,
   StatisticsUpdate,
 } = v1;
@@ -192,47 +186,6 @@ describe("PlantOS Admin Protocol", () => {
     expect(updateResponse.updatedSettings?.notifyOnError).toBe(
       newSettings.notifyOnError,
     );
-  });
-
-  it("should water a zone", async () => {
-    const zoneId = await getFirstZoneId(client);
-
-    client.send(
-      MessageType.MSG_WATER_ZONE_REQUEST,
-      WaterZoneRequest.create({ zoneId }),
-      WaterZoneRequest,
-    );
-    const payload = await client.waitForMessage(
-      MessageType.MSG_WATER_ZONE_RESPONSE,
-    );
-    const response = WaterZoneResponse.decode(payload);
-    expect(response.success).toBe(true);
-  });
-
-  it("should pause and resume a zone", async () => {
-    const zoneId = await getFirstZoneId(client);
-
-    client.send(
-      MessageType.MSG_PAUSE_ZONE_REQUEST,
-      PauseZoneRequest.create({ zoneId }),
-      PauseZoneRequest,
-    );
-    const pausePayload = await client.waitForMessage(
-      MessageType.MSG_PAUSE_ZONE_RESPONSE,
-    );
-    const pauseResponse = PauseZoneResponse.decode(pausePayload);
-    expect(pauseResponse.success).toBe(true);
-
-    client.send(
-      MessageType.MSG_RESUME_ZONE_REQUEST,
-      ResumeZoneRequest.create({ zoneId }),
-      ResumeZoneRequest,
-    );
-    const resumePayload = await client.waitForMessage(
-      MessageType.MSG_RESUME_ZONE_RESPONSE,
-    );
-    const resumeResponse = ResumeZoneResponse.decode(resumePayload);
-    expect(resumeResponse.success).toBe(true);
   });
 
   it("should handle non-existent zone", async () => {

@@ -311,11 +311,10 @@ enum ErrorCode {
   ERROR_CODE_INVALID_REQUEST = 1;
   ERROR_CODE_ZONE_NOT_FOUND = 2;
   ERROR_CODE_MODULE_NOT_FOUND = 3;
-  ERROR_CODE_ZONE_BUSY = 4;
-  ERROR_CODE_MODULE_OFFLINE = 5;
-  ERROR_CODE_INTERNAL_ERROR = 6;
-  ERROR_CODE_INVALID_TIME_RANGE = 7;
-  ERROR_CODE_VERSION_MISMATCH = 8;
+  ERROR_CODE_MODULE_OFFLINE = 4;
+  ERROR_CODE_INTERNAL_ERROR = 5;
+  ERROR_CODE_INVALID_TIME_RANGE = 6;
+  ERROR_CODE_VERSION_MISMATCH = 7;
 }
 
 // Data Structures
@@ -458,38 +457,6 @@ message GetStatisticsResponse {
   repeated Statistic statistics = 2;
 }
 
-// Client -> Hub: Control commands
-
-message WaterZoneRequest {
-  int32 zone_id = 1;
-
-  // Optional: override default duration
-  optional google.protobuf.Duration duration = 2;
-}
-
-message WaterZoneResponse {
-  bool success = 1;
-  google.protobuf.Timestamp started_at = 2;
-  google.protobuf.Duration duration = 3;
-}
-
-message PauseZoneRequest {
-  int32 zone_id = 1;
-}
-
-message PauseZoneResponse {
-  bool success = 1;
-  Status previous_status = 2;
-}
-
-message ResumeZoneRequest {
-  int32 zone_id = 1;
-}
-
-message ResumeZoneResponse {
-  bool success = 1;
-}
-
 // Settings management
 
 message GetZoneSettingsRequest {
@@ -520,8 +487,7 @@ message ZoneUpdate {
     CHANGE_TYPE_UNSPECIFIED = 0;
     CHANGE_TYPE_STATUS = 1;
     CHANGE_TYPE_STATISTICS = 2;
-    CHANGE_TYPE_WATERED = 3;
-    CHANGE_TYPE_SETTINGS = 4;
+    CHANGE_TYPE_SETTINGS = 3;
   }
   ChangeType change_type = 3;
   google.protobuf.Timestamp timestamp = 4;
@@ -572,11 +538,8 @@ enum MessageType {
   MSG_LIST_ZONES_REQUEST = 4;
   MSG_GET_ZONE_REQUEST = 5;
   MSG_GET_STATISTICS_REQUEST = 6;
-  MSG_WATER_ZONE_REQUEST = 7;
-  MSG_PAUSE_ZONE_REQUEST = 8;
-  MSG_RESUME_ZONE_REQUEST = 9;
-  MSG_GET_ZONE_SETTINGS_REQUEST = 10;
-  MSG_UPDATE_ZONE_SETTINGS_REQUEST = 11;
+  MSG_GET_ZONE_SETTINGS_REQUEST = 7;
+  MSG_UPDATE_ZONE_SETTINGS_REQUEST = 8;
 
   // Hub -> Client
   MSG_WELCOME = 1001;
@@ -585,11 +548,8 @@ enum MessageType {
   MSG_LIST_ZONES_RESPONSE = 1004;
   MSG_GET_ZONE_RESPONSE = 1005;
   MSG_GET_STATISTICS_RESPONSE = 1006;
-  MSG_WATER_ZONE_RESPONSE = 1007;
-  MSG_PAUSE_ZONE_RESPONSE = 1008;
-  MSG_RESUME_ZONE_RESPONSE = 1009;
-  MSG_GET_ZONE_SETTINGS_RESPONSE = 1010;
-  MSG_UPDATE_ZONE_SETTINGS_RESPONSE = 1011;
+  MSG_GET_ZONE_SETTINGS_RESPONSE = 1007;
+  MSG_UPDATE_ZONE_SETTINGS_RESPONSE = 1008;
 
   // Broadcasts
   MSG_ZONE_UPDATE = 2001;
@@ -668,39 +628,7 @@ Retrieves historical statistics for a zone within a specified time range.
 - `types`: Optional filter for specific statistic types
 - `aggregation`: Optional data aggregation level
 
-### 4.5 Control Operations
-
-#### Water Zone
-
-**Direction**: Client → Hub
-**Request**: `WaterZoneRequest` (zone_id, optional duration)
-**Response**: `WaterZoneResponse` or `ErrorResponse`
-
-Triggers immediate watering for a zone.
-
-**Error Cases**:
-
-- `ERROR_CODE_ZONE_NOT_FOUND`: Zone doesn't exist
-- `ERROR_CODE_ZONE_BUSY`: Zone is already watering or paused
-- `ERROR_CODE_MODULE_OFFLINE`: Controlling module is offline
-
-#### Pause Zone
-
-**Direction**: Client → Hub
-**Request**: `PauseZoneRequest` (zone_id)
-**Response**: `PauseZoneResponse` or `ErrorResponse`
-
-Pauses automatic watering schedule for a zone.
-
-#### Resume Zone
-
-**Direction**: Client → Hub
-**Request**: `ResumeZoneRequest` (zone_id)
-**Response**: `ResumeZoneResponse` or `ErrorResponse`
-
-Resumes automatic watering schedule for a zone.
-
-### 4.6 Settings Operations
+### 4.5 Settings Operations
 
 #### Get Zone Settings
 
@@ -730,7 +658,6 @@ The hub broadcasts updates to all connected clients when state changes occur.
 Sent when:
 
 - Zone status changes (Idle → Working, etc.)
-- Zone is watered
 - Zone settings change
 - Current statistics update
 
@@ -757,16 +684,15 @@ Sent periodically (e.g., every 5 minutes) with new sensor readings.
 
 ### 5.1 Error Codes
 
-| Code                 | Description                | Typical Cause                             |
-| -------------------- | -------------------------- | ----------------------------------------- |
-| `INVALID_REQUEST`    | Malformed request          | Missing required fields, invalid protobuf |
-| `ZONE_NOT_FOUND`     | Zone ID doesn't exist      | Client using stale zone ID                |
-| `MODULE_NOT_FOUND`   | Module ID doesn't exist    | Client using stale module ID              |
-| `ZONE_BUSY`          | Zone cannot accept command | Already watering or paused                |
-| `MODULE_OFFLINE`     | Module not connected       | Network issue or power loss               |
-| `INTERNAL_ERROR`     | Hub internal failure       | Database error, hardware failure          |
-| `INVALID_TIME_RANGE` | Invalid statistics range   | `from` after `to`, future date            |
-| `VERSION_MISMATCH`   | Protocol version mismatch  | Client too old or too new                 |
+| Code                 | Description               | Typical Cause                             |
+| -------------------- | ------------------------- | ----------------------------------------- |
+| `INVALID_REQUEST`    | Malformed request         | Missing required fields, invalid protobuf |
+| `ZONE_NOT_FOUND`     | Zone ID doesn't exist     | Client using stale zone ID                |
+| `MODULE_NOT_FOUND`   | Module ID doesn't exist   | Client using stale module ID              |
+| `MODULE_OFFLINE`     | Module not connected      | Network issue or power loss               |
+| `INTERNAL_ERROR`     | Hub internal failure      | Database error, hardware failure          |
+| `INVALID_TIME_RANGE` | Invalid statistics range  | `from` after `to`, future date            |
+| `VERSION_MISMATCH`   | Protocol version mismatch | Client too old or too new                 |
 
 ### 5.2 Error Response Format
 
@@ -864,11 +790,6 @@ Client                                    Hub
   |                                         |
   |<----- ZoneUpdate {zone_id: 1, ...} -----|  (broadcast)
   |<----- StatisticsUpdate {zone_id: 1} ----|  (broadcast)
-  |                                         |
-  |----- WaterZoneRequest {zone_id: 1} ---->|
-  |                                         |
-  |<----- WaterZoneResponse {success} ------|
-  |<----- ZoneUpdate {status: WORKING} -----|  (broadcast to all clients)
   |                                         |
 ```
 

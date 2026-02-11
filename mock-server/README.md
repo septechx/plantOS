@@ -130,9 +130,6 @@ N bytes:  Ciphertext (encrypted protobuf payload)
 | `ListModules`                  | List all modules          | ✅ Implemented |
 | `GetModule`                    | Get module details        | ✅ Implemented |
 | `GetStatistics`                | Get historical statistics | ✅ Implemented |
-| `WaterZone`                    | Trigger watering          | ✅ Implemented |
-| `PauseZone`                    | Pause zone                | ✅ Implemented |
-| `ResumeZone`                   | Resume zone               | ✅ Implemented |
 | `GetZoneSettings`              | Get zone settings         | ✅ Implemented |
 | `UpdateZoneSettings`           | Update zone settings      | ✅ Implemented |
 | `ZoneUpdate` (broadcast)       | Zone state changes        | ✅ Implemented |
@@ -147,7 +144,6 @@ All error codes from the protocol specification are supported:
 - `ERROR_CODE_INVALID_REQUEST`
 - `ERROR_CODE_ZONE_NOT_FOUND`
 - `ERROR_CODE_MODULE_NOT_FOUND`
-- `ERROR_CODE_ZONE_BUSY`
 - `ERROR_CODE_MODULE_OFFLINE`
 - `ERROR_CODE_INTERNAL_ERROR`
 - `ERROR_CODE_INVALID_TIME_RANGE`

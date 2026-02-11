@@ -20,7 +20,6 @@ import { registerHandshakeHandlers } from "./handlers/handshake";
 import { registerZoneHandlers } from "./handlers/zones";
 import { registerModuleHandlers } from "./handlers/modules";
 import { registerStatisticsHandlers } from "./handlers/statistics";
-import { registerControlHandlers } from "./handlers/control";
 import { registerSettingsHandlers } from "./handlers/settings";
 import { broadcastStatisticsUpdate } from "./handlers/statistics";
 
@@ -243,7 +242,6 @@ export class PlantOSMockServer {
     registerZoneHandlers(this.registry);
     registerModuleHandlers(this.registry);
     registerStatisticsHandlers(this.registry);
-    registerControlHandlers(this.registry);
     registerSettingsHandlers(this.registry);
   }
 
