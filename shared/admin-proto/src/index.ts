@@ -1,5 +1,7 @@
 import { plantos, google } from "./proto-generated/admin";
 
+export { plantos, google } from "./proto-generated/admin";
+
 export import v1 = plantos.admin.v1;
 export import common = google;
 

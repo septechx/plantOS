@@ -106,6 +106,7 @@ message Welcome {
   string hub_id = 1;
   string hub_version = 2;
   google.protobuf.Timestamp server_timestamp = 3;  // Server time for sync
+  bytes session_id = 4;  // 16 bytes (128-bit) random session ID for encryption
 }
 
 // Client -> Hub: Request to list all modules
