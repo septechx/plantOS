@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: ./plantos-app
@@ -42,7 +44,8 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    needs: build
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: ./plantos-app
@@ -77,6 +80,8 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: ./plantos-app

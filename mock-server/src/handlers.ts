@@ -1,3 +1,4 @@
+import { Long } from "protobufjs";
 import {
   v1,
   common,
@@ -33,7 +34,7 @@ const {
 const Timestamp = common.protobuf.Timestamp;
 
 function timestampToMillis(ts: {
-  seconds?: number | unknown;
+  seconds?: number | Long;
   nanos?: number | null;
 }): number {
   return (Number(ts.seconds) || 0) * 1000 + (ts.nanos ?? 0) / 1_000_000;
@@ -145,9 +146,10 @@ function handleGetStatisticsRequest(data: Uint8Array): Uint8Array {
     );
   }
 
+  const fromTime = from ? timestampToMillis(from) : 0;
+  const toTime = to ? timestampToMillis(to) : 0;
+
   if (from && to) {
-    const fromTime = timestampToMillis(from);
-    const toTime = timestampToMillis(to);
     if (fromTime > toTime) {
       const error = new ErrorResponse();
       error.code = ErrorCode.ERROR_CODE_INVALID_TIME_RANGE;
@@ -170,14 +172,14 @@ function handleGetStatisticsRequest(data: Uint8Array): Uint8Array {
   }
 
   if (from && to) {
-    const fromTime = timestampToMillis(from);
-    const toTime = timestampToMillis(to);
-
-    statistics.forEach((s) => {
-      s.history = s.history.filter((dp) => {
+    statistics = statistics.map((s) => {
+      const filteredHistory = s.history.filter((dp) => {
         if (!dp.timestamp) return false;
         const dpTime = timestampToMillis(dp.timestamp);
         return dpTime >= fromTime && dpTime <= toTime;
+      });
+      return Object.assign(Object.create(Object.getPrototypeOf(s)), s, {
+        history: filteredHistory,
       });
     });
   }

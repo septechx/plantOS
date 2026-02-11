@@ -55,7 +55,6 @@ const MODULE_DEFINITIONS = [
     status: Status.STATUS_IDLE,
     batteryLevel: 85,
     zoneIds: [1, 2],
-    lastSeen: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
   },
   {
     id: 2,
@@ -63,7 +62,6 @@ const MODULE_DEFINITIONS = [
     status: Status.STATUS_WORKING,
     batteryLevel: 72,
     zoneIds: [3, 4],
-    lastSeen: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
   },
   {
     id: 3,
@@ -71,7 +69,6 @@ const MODULE_DEFINITIONS = [
     status: Status.STATUS_IDLE,
     batteryLevel: 95,
     zoneIds: [5],
-    lastSeen: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
   },
 ];
 
@@ -302,7 +299,10 @@ export function getModules(): v1.Module[] {
     module.status = def.status;
     module.batteryLevel = def.batteryLevel;
     module.zoneIds = def.zoneIds;
-    module.lastSeen = Timestamp.fromObject(def.lastSeen);
+    module.lastSeen = Timestamp.fromObject({
+      seconds: Math.floor(Date.now() / 1000),
+      nanos: 0,
+    });
     return module;
   });
 }
