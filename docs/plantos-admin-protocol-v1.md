@@ -1,7 +1,7 @@
 # PlantOS Admin Protocol
 
-**Version**: 1.0
-**Date**: 2026-02-09
+**Version**: 1.0.1
+**Date**: 2026-02-13
 
 ## 1. Overview
 
@@ -150,19 +150,24 @@ The QR code contains a JSON object with four required fields:
 const qrPayload = JSON.parse(qrCodeData);
 // { v: 1, hub_id: "hub-abc123", hub_address: "wss://192.168.1.100:443/v1/admin", key: "..." }
 
-// 2. Establish WebSocket (TLS only)
+// 2. Establish WebSocket with required subprotocol
 const ws = new WebSocket(qrPayload.hub_address, "plantos-protobuf");
 
 // 3. On connection, send Hello (unencrypted - no session yet)
-ws.send(encodeMessage(MSG_HELLO, Hello.encode({ protocol_version: "1.0" })));
+ws.send(
+  encodeMessage(
+    MSG_HELLO,
+    Hello.encode({ protocolVersion: "1.0", clientVersion: "1.0.0" }),
+  ),
+);
 
 // 4. Receive Welcome with session_id
-const { session_id } = Welcome.decode(payload);
+const { sessionId } = Welcome.decode(payload);
 
 // 5. Derive session key
 derivedKey = hkdfSha256(
   base64UrlDecode(qrPayload.key),
-  session_id,
+  sessionId, // 16 bytes from Welcome
   "plantos-v1-message-key",
   32,
 );
@@ -241,7 +246,9 @@ When implementing the QR payload:
 - **Protocol**: WebSocket Secure (WSS) over TLS
 - **Default Port**: 443 (or custom port if specified)
 - **Path**: `/v1/admin`
-- **Subprotocol**: `plantos-protobuf`
+- **Subprotocol**: `plantos-protobuf` (required)
+
+The `plantos-protobuf` subprotocol MUST be specified during the WebSocket handshake. The server will reject connections that don't request this subprotocol.
 
 ### 2.2 Message Framing
 
@@ -268,11 +275,14 @@ This framing applies ONLY to `Hello` and `Welcome`/`Error` messages during the i
 
 ### 2.3 Connection Lifecycle
 
-1. Client establishes WSS connection to hub
-2. Client sends `Hello` message with protocol version
-3. Hub responds with `Welcome` or `Error` (if version mismatch)
-4. Bidirectional communication begins
-5. Either party may close connection
+1. Client establishes WSS connection to hub with subprotocol `plantos-protobuf`
+2. Client sends unencrypted `Hello` message with protocol version
+3. Hub responds with unencrypted `Welcome` (success) or `ErrorResponse` (version mismatch)
+4. After receiving `Welcome`, **all subsequent messages MUST be encrypted** using the derived session key
+5. Bidirectional encrypted communication begins
+6. Either party may close connection
+
+**Important**: The transition from unencrypted to encrypted happens immediately after the `Welcome` message is received. The `Welcome` message itself is unencrypted, but contains the `session_id` needed to derive the encryption key for all following messages.
 
 ## 3. Data Model
 
@@ -386,7 +396,8 @@ message Hello {
 message Welcome {
   string hub_id = 1;
   string hub_version = 2;
-  int64 server_timestamp = 3;  // Unix timestamp for sync
+  google.protobuf.Timestamp server_timestamp = 3;  // Server time for sync
+  bytes session_id = 4;  // 16 bytes (128-bit) random session ID for encryption
 }
 
 // Client -> Hub: Request to list all modules
@@ -522,7 +533,7 @@ message ErrorResponse {
   string message = 2;
 
   // Optional: request that caused the error
-  string request_type = 3;
+  MessageType request_type = 3;
 }
 
 // Message type identifiers (4-byte prefix)
@@ -678,21 +689,22 @@ Sent when:
 **Direction**: Hub → Client (broadcast)
 **Message**: `StatisticsUpdate`
 
-Sent periodically (e.g., every 5 minutes) with new sensor readings.
+Sent periodically (configurable, e.g., every 5 seconds for testing or 5 minutes for production) with new sensor readings.
 
 ## 5. Error Handling
 
 ### 5.1 Error Codes
 
-| Code                 | Description               | Typical Cause                             |
-| -------------------- | ------------------------- | ----------------------------------------- |
-| `INVALID_REQUEST`    | Malformed request         | Missing required fields, invalid protobuf |
-| `ZONE_NOT_FOUND`     | Zone ID doesn't exist     | Client using stale zone ID                |
-| `MODULE_NOT_FOUND`   | Module ID doesn't exist   | Client using stale module ID              |
-| `MODULE_OFFLINE`     | Module not connected      | Network issue or power loss               |
-| `INTERNAL_ERROR`     | Hub internal failure      | Database error, hardware failure          |
-| `INVALID_TIME_RANGE` | Invalid statistics range  | `from` after `to`, future date            |
-| `VERSION_MISMATCH`   | Protocol version mismatch | Client too old or too new                 |
+| Code                            | Value | Description               | Typical Cause                             |
+| ------------------------------- | ----- | ------------------------- | ----------------------------------------- |
+| `ERROR_CODE_UNSPECIFIED`        | 0     | Unspecified error         | Default/placeholder                       |
+| `ERROR_CODE_INVALID_REQUEST`    | 1     | Malformed request         | Missing required fields, invalid protobuf |
+| `ERROR_CODE_ZONE_NOT_FOUND`     | 2     | Zone ID doesn't exist     | Client using stale zone ID                |
+| `ERROR_CODE_MODULE_NOT_FOUND`   | 3     | Module ID doesn't exist   | Client using stale module ID              |
+| `ERROR_CODE_MODULE_OFFLINE`     | 4     | Module not connected      | Network issue or power loss               |
+| `ERROR_CODE_INTERNAL_ERROR`     | 5     | Hub internal failure      | Database error, hardware failure          |
+| `ERROR_CODE_INVALID_TIME_RANGE` | 6     | Invalid statistics range  | `from` after `to`, future date            |
+| `ERROR_CODE_VERSION_MISMATCH`   | 7     | Protocol version mismatch | Client too old or too new                 |
 
 ### 5.2 Error Response Format
 
@@ -740,6 +752,16 @@ All errors return `ErrorResponse` with:
 - Handle all error codes gracefully
 - Note: Zone and module IDs are 1-based; ID 0 is reserved and invalid
 
+#### Field Naming Convention
+
+Protocol Buffers use **snake_case** for field names in the `.proto` file (e.g., `protocol_version`, `zone_id`). When working with protobuf-generated code:
+
+- **JSON/Proto3**: Fields use snake_case by default
+- **Generated accessors**: Most protobuf libraries provide camelCase accessors (e.g., `protocolVersion`, `zoneId`)
+- **Examples in this spec**: May use either form depending on context
+
+Always refer to the canonical `.proto` file for exact field names.
+
 ### 7.2 Hub Guidelines
 
 - Broadcast updates to all connected clients
@@ -764,9 +786,18 @@ All errors return `ErrorResponse` with:
 
 ## 9. Version History
 
-| Version | Date       | Changes                 |
-| ------- | ---------- | ----------------------- |
-| 1.0     | 2026-02-09 | Initial protocol design |
+| Version | Date       | Changes                                                                |
+| ------- | ---------- | ---------------------------------------------------------------------- |
+| 1.0     | 2026-02-09 | Initial protocol design                                                |
+| 1.0.1   | 2026-02-13 | Aligned protobuf definitions with proto/plantos/admin/v1/admin.proto:  |
+|         |            | - Added `session_id` field to `Welcome` message                        |
+|         |            | - Fixed `Welcome.server_timestamp` type to `google.protobuf.Timestamp` |
+|         |            | - Fixed ErrorCode enum values (shifted 6→5, 7→6, 8→7, no gaps)         |
+|         |            | - Fixed `ErrorResponse.request_type` to use `MessageType` enum         |
+|         |            | - Clarified encryption transition after `Welcome` message              |
+|         |            | - Documented required WebSocket subprotocol `plantos-protobuf`         |
+|         |            | - Updated message flow diagram to show encryption phases               |
+|         |            | - Added field naming convention documentation                          |
 
 ## Appendix A: Example Message Flow
 
@@ -774,22 +805,26 @@ All errors return `ErrorResponse` with:
 Client                                    Hub
   |                                         |
   |----- WSS CONNECT wss://hub:443/v1/admin |
+  |      Subprotocol: plantos-protobuf      |
   |                                         |
-  |----- Hello {version: "1.0"} ----------->|
+  |----- Hello {protocolVersion: "1.0"} --->|  [unencrypted]
   |                                         |
-  |<----- Welcome {hub_id, version} --------|
+  |<----- Welcome {hub_id, version, --------|  [unencrypted]
+  |       session_id}                       |
   |                                         |
-  |----- ListModulesRequest --------------->|
+  |  [derive session key from session_id]   |
   |                                         |
-  |<----- ListModulesResponse {modules} ----|
+  |----- ListModulesRequest --------------->|  [encrypted]
   |                                         |
-  |----- GetStatisticsRequest ------------->|
+  |<----- ListModulesResponse {modules} ----|  [encrypted]
+  |                                         |
+  |----- GetStatisticsRequest ------------->|  [encrypted]
   |    {zone_id: 1, from: ..., to: ...}     |
   |                                         |
-  |<----- GetStatisticsResponse {stats} ----|
+  |<----- GetStatisticsResponse {stats} ----|  [encrypted]
   |                                         |
-  |<----- ZoneUpdate {zone_id: 1, ...} -----|  (broadcast)
-  |<----- StatisticsUpdate {zone_id: 1} ----|  (broadcast)
+  |<----- ZoneUpdate {zone_id: 1, ...} -----|  [encrypted, broadcast]
+  |<----- StatisticsUpdate {zone_id: 1} ----|  [encrypted, broadcast]
   |                                         |
 ```
 
