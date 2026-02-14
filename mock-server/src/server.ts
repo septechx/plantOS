@@ -1,6 +1,12 @@
 import crypto from "crypto";
 import { WebSocketServer, WebSocket } from "ws";
-import { getMessageTypeName, Status } from "@plantos/admin-proto";
+import {
+  getMessageTypeName,
+  v1,
+  parseEncryptedMessage,
+  parseUnencryptedMessage,
+  decryptMessage,
+} from "@plantos/admin-proto";
 import { HandlerRegistry } from "./handlers/registry";
 import { SessionManager } from "./session";
 import { InMemoryDataStore } from "./store";
@@ -11,11 +17,6 @@ import {
   ZoneDefinition,
   ModuleDefinition,
 } from "./types";
-import {
-  parseEncryptedMessage,
-  parseUnencryptedMessage,
-  decryptMessage,
-} from "./encryption";
 import { registerHandshakeHandlers } from "./handlers/handshake";
 import { registerZoneHandlers } from "./handlers/zones";
 import { registerModuleHandlers } from "./handlers/modules";
@@ -23,7 +24,7 @@ import { registerStatisticsHandlers } from "./handlers/statistics";
 import { registerSettingsHandlers } from "./handlers/settings";
 import { broadcastStatisticsUpdate } from "./handlers/statistics";
 
-export { ZoneDefinition, ModuleDefinition, StatisticDefinition } from "./types";
+const { Status } = v1;
 
 export class PlantOSMockServer {
   private wss: WebSocketServer | null = null;
@@ -71,55 +72,72 @@ export class PlantOSMockServer {
   /**
    * Start the mock server.
    */
-  start(): void {
-    this.wss = new WebSocketServer({
-      port: this.config.port,
-      path: "/v1/admin",
-      handleProtocols: (protocols) => {
-        if (protocols.has("plantos-protobuf")) return "plantos-protobuf";
-        return false;
-      },
+  start(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.wss = new WebSocketServer({
+        port: this.config.port,
+      });
+
+      this.wss.on("error", (err) => {
+        reject(err);
+      });
+
+      this.wss.on("listening", () => {
+        console.log(`🌱 PlantOS Mock Server`);
+        console.log(`Listening on ws://localhost:${this.config.port}/v1/admin`);
+        console.log(`Hub ID: ${this.config.hubId}`);
+        console.log(`Hub Version: ${this.config.hubVersion}`);
+        console.log(
+          `Encryption: ${this.config.enableEncryption ? "enabled" : "disabled"}`,
+        );
+        console.log(`Broadcast interval: ${this.config.broadcastIntervalMs}ms`);
+        console.log("");
+        resolve();
+      });
+
+      this.wss.on("connection", (ws: WebSocket) => {
+        this.handleConnection(ws);
+      });
+
+      this.startBroadcasts();
+
+      process.on("SIGINT", () => this.shutdown());
+      process.on("SIGTERM", () => this.shutdown());
     });
-
-    console.log(`🌱 PlantOS Mock Server`);
-    console.log(`Listening on ws://localhost:${this.config.port}/v1/admin`);
-    console.log(`Hub ID: ${this.config.hubId}`);
-    console.log(`Hub Version: ${this.config.hubVersion}`);
-    console.log(
-      `Encryption: ${this.config.enableEncryption ? "enabled" : "disabled"}`,
-    );
-    console.log(`Broadcast interval: ${this.config.broadcastIntervalMs}ms`);
-    console.log("");
-
-    this.wss.on("connection", (ws: WebSocket) => {
-      this.handleConnection(ws);
-    });
-
-    // Start periodic broadcasts
-    this.startBroadcasts();
-
-    // Handle shutdown
-    process.on("SIGINT", () => this.shutdown());
-    process.on("SIGTERM", () => this.shutdown());
   }
 
   /**
    * Stop the mock server.
    */
-  stop(): void {
-    this.shutdown();
+  stop(): Promise<void> {
+    return this.shutdown();
   }
 
-  /**
-   * Get the encryption key (for QR code generation).
-   */
+  private shutdown(): Promise<void> {
+    return new Promise((resolve) => {
+      console.log("\nShutting down server...");
+
+      if (this.broadcastInterval) {
+        clearInterval(this.broadcastInterval);
+        this.broadcastInterval = null;
+      }
+
+      if (this.wss) {
+        this.wss.close(() => {
+          console.log("Server closed");
+          this.wss = null;
+          resolve();
+        });
+      } else {
+        resolve();
+      }
+    });
+  }
+
   getEncryptionKey(): Buffer {
     return this.config.encryptionKey;
   }
 
-  /**
-   * Get the hub ID.
-   */
   getHubId(): string {
     return this.config.hubId;
   }
@@ -168,16 +186,13 @@ export class PlantOSMockServer {
     let messageType: number;
     let payload: Uint8Array;
 
-    // Parse message based on encryption state
     if (session.isEncrypted) {
-      // Expect encrypted message
       const parsed = parseEncryptedMessage(data);
       if (!parsed) {
         console.error("Failed to parse encrypted message");
         return;
       }
 
-      // Decrypt the message
       try {
         const decrypted = decryptMessage(session.derivedKey, parsed.encrypted);
         messageType = parsed.messageType;
@@ -187,14 +202,12 @@ export class PlantOSMockServer {
         return;
       }
 
-      // Increment message count
       if (!this.sessionManager.incrementMessageCount(session)) {
         console.error("Session message limit exceeded, closing connection");
         ws.close();
         return;
       }
     } else {
-      // Expect unencrypted message (handshake phase)
       const parsed = parseUnencryptedMessage(data);
       if (!parsed) {
         console.error("Failed to parse unencrypted message");
@@ -272,23 +285,6 @@ export class PlantOSMockServer {
         `Broadcasted statistics updates to ${this.broadcastManager.getClientCount()} client(s)`,
       );
     }, this.config.broadcastIntervalMs);
-  }
-
-  private shutdown(): void {
-    console.log("\nShutting down server...");
-
-    if (this.broadcastInterval) {
-      clearInterval(this.broadcastInterval);
-    }
-
-    if (this.wss) {
-      this.wss.close(() => {
-        console.log("Server closed");
-        process.exit(0);
-      });
-    } else {
-      process.exit(0);
-    }
   }
 
   private generateEncryptionKey(): Buffer {

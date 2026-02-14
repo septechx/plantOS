@@ -1,5 +1,5 @@
 import { Session } from "./types";
-import { deriveSessionKey, generateSessionId } from "./encryption";
+import { deriveSessionKey, generateSessionId } from "@plantos/admin-proto";
 
 export class SessionManager {
   private sessions: Map<string, Session> = new Map();

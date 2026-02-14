@@ -16,10 +16,14 @@ importers:
         version: 3.8.1
 
   admin-protocol-tests:
-    devDependencies:
+    dependencies:
       '@plantos/admin-proto':
         specifier: workspace:*
         version: link:../shared/admin-proto
+      '@plantos/mock-server':
+        specifier: workspace:*
+        version: link:../mock-server
+    devDependencies:
       '@types/node':
         specifier: ^25.2.2
         version: 25.2.2

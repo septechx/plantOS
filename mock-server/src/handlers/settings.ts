@@ -1,16 +1,18 @@
-import { MessageType, ErrorCode } from "@plantos/admin-proto";
+import { MessageType, v1 } from "@plantos/admin-proto";
 import {
   GetZoneSettingsRequest,
   GetZoneSettingsResponse,
   UpdateZoneSettingsRequest,
   UpdateZoneSettingsResponse,
   ZoneSettings,
-  ZoneUpdateChangeType,
   ZoneSettingsType,
+  ZoneUpdate,
 } from "../types";
 import { HandlerRegistry } from "./registry";
 import { HandlerContext, ErrorResult } from "../types";
 import { broadcastZoneUpdate } from "./zones";
+
+const { ErrorCode } = v1;
 
 export function registerSettingsHandlers(registry: HandlerRegistry): void {
   // GetZoneSettings handler
@@ -123,7 +125,7 @@ export function registerSettingsHandlers(registry: HandlerRegistry): void {
       broadcastZoneUpdate(
         zoneId,
         zone,
-        ZoneUpdateChangeType.CHANGE_TYPE_SETTINGS,
+        ZoneUpdate.ChangeType.CHANGE_TYPE_SETTINGS,
         context,
       );
 

@@ -3,7 +3,7 @@ import {
   encodeEncryptedMessage,
   encryptMessage,
   encodeUnencryptedMessage,
-} from "./encryption";
+} from "@plantos/admin-proto";
 
 export type ClientSendFunction = (data: Uint8Array) => void;
 

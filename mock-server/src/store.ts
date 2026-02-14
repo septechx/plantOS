@@ -1,4 +1,4 @@
-import { v1, common, StatisticType } from "@plantos/admin-proto";
+import { v1, common } from "@plantos/admin-proto";
 import {
   DataStore,
   ZoneDefinition,
@@ -10,6 +10,7 @@ import {
 } from "./types";
 
 const Timestamp = common.protobuf.Timestamp;
+const { StatisticType } = v1;
 
 // Default statistic ranges
 const DEFAULT_STATISTICS: Record<string, StatisticDefinition> = {

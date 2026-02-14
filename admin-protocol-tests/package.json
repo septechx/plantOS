@@ -7,8 +7,11 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
-  "devDependencies": {
+  "dependencies": {
     "@plantos/admin-proto": "workspace:*",
+    "@plantos/mock-server": "workspace:*"
+  },
+  "devDependencies": {
     "ws": "^8.16.0",
     "protobufjs": "^7.3.0",
     "tsx": "^4.7.1",

@@ -1,31 +1,52 @@
 import WebSocket from "ws";
+import { MessageType, getMessageTypeName, v1 } from "@plantos/admin-proto";
 import {
-  MessageType,
-  encodeMessage,
-  parseMessage,
-  getMessageTypeName,
-  v1,
+  deriveSessionKey,
+  encryptMessage,
+  decryptMessage,
+  encodeEncryptedMessage,
+  parseEncryptedMessage,
+  encodeUnencryptedMessage,
+  parseUnencryptedMessage,
 } from "@plantos/admin-proto";
 
-const { Hello, Welcome } = v1;
+const MAX_MESSAGE_COUNT = 0xffffffff;
 
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
-const URL = `ws://localhost:${PORT}/v1/admin`;
+export interface TestClientConfig {
+  encryptionKey: Buffer;
+  url?: string;
+  port?: number;
+}
 
 export class TestClient {
   ws: WebSocket | undefined;
   messageQueue: { type: number; payload: Uint8Array }[] = [];
   messageWaiters: { type: number; resolve: (payload: Uint8Array) => void }[] =
     [];
-  isConnected: boolean = false;
 
-  constructor() {}
+  private encryptionKey: Buffer;
+  private url: string;
+  private derivedKey: Buffer | null = null;
+  private isEncrypted: boolean = false;
+  private messageCount: number = 0;
+
+  constructor(config: TestClientConfig) {
+    if (config.encryptionKey.length !== 32) {
+      throw new Error("Encryption key must be 32 bytes");
+    }
+    this.encryptionKey = config.encryptionKey;
+    if (config.url) {
+      this.url = config.url;
+    } else if (config.port) {
+      this.url = `ws://localhost:${config.port}`;
+    } else {
+      this.url = "ws://localhost:8080";
+    }
+  }
 
   async connect(): Promise<void> {
-    // Return immediately if already connected and open
     if (this.ws?.readyState === WebSocket.OPEN) return;
 
-    // Reuse existing socket if it's connecting (not closed)
     if (
       this.ws &&
       this.ws.readyState !== WebSocket.CLOSED &&
@@ -39,7 +60,6 @@ export class TestClient {
           );
           this.ws!.once("open", () => {
             clearTimeout(timeout);
-            this.isConnected = true;
             resolve();
           });
           this.ws!.once("error", (err) => {
@@ -50,8 +70,7 @@ export class TestClient {
       }
     }
 
-    // Create new WebSocket if none exists or it's closed
-    this.ws = new WebSocket(URL);
+    this.ws = new WebSocket(this.url);
     this.ws.on("message", (data: Buffer) => this.handleMessage(data));
     this.ws.on("error", (err) => console.error("WS Error:", err));
 
@@ -62,7 +81,6 @@ export class TestClient {
       );
       this.ws!.once("open", () => {
         clearTimeout(timeout);
-        this.isConnected = true;
         resolve();
       });
       this.ws!.once("error", (err) => {
@@ -74,9 +92,11 @@ export class TestClient {
 
   close() {
     this.ws?.close();
-    this.isConnected = false;
     this.messageQueue = [];
     this.messageWaiters = [];
+    this.derivedKey = null;
+    this.isEncrypted = false;
+    this.messageCount = 0;
   }
 
   send<T>(
@@ -87,26 +107,72 @@ export class TestClient {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       throw new Error("WebSocket not connected or not open");
     }
-    const payload = encoder.encode(message).finish();
-    this.ws.send(encodeMessage(type, payload));
+
+    if (this.isEncrypted) {
+      if (this.messageCount >= MAX_MESSAGE_COUNT) {
+        throw new Error("Session message limit exceeded (2^32 messages)");
+      }
+
+      const payload = encoder.encode(message).finish();
+      const encrypted = encryptMessage(this.derivedKey!, Buffer.from(payload));
+      const encoded = encodeEncryptedMessage(type, encrypted);
+
+      this.ws.send(encoded);
+      this.messageCount++;
+    } else {
+      const payload = encoder.encode(message).finish();
+      const encoded = encodeUnencryptedMessage(type, payload);
+      this.ws.send(encoded);
+    }
   }
 
-  handleMessage(data: Buffer) {
-    const parsed = parseMessage(data);
-    if (!parsed) return;
+  private handleMessage(data: Buffer) {
+    let messageType: number;
+    let payload: Uint8Array;
 
-    // Check if anyone is waiting for this message type
+    if (this.isEncrypted) {
+      const parsed = parseEncryptedMessage(data);
+      if (!parsed) {
+        console.error("Failed to parse encrypted message");
+        return;
+      }
+
+      try {
+        payload = decryptMessage(this.derivedKey!, parsed.encrypted);
+        messageType = parsed.messageType;
+      } catch (error) {
+        console.error("Failed to decrypt message:", error);
+        return;
+      }
+
+      if (this.messageCount >= MAX_MESSAGE_COUNT) {
+        console.error("Session message limit exceeded");
+        this.close();
+        return;
+      }
+      this.messageCount++;
+    } else {
+      const parsed = parseUnencryptedMessage(data);
+      if (!parsed) {
+        console.error("Failed to parse unencrypted message");
+        return;
+      }
+
+      messageType = parsed.messageType;
+      payload = parsed.payload;
+    }
+
     const waiterIndex = this.messageWaiters.findIndex(
-      (w) => w.type === parsed.messageType,
+      (w) => w.type === messageType,
     );
     if (waiterIndex !== -1) {
       const waiter = this.messageWaiters[waiterIndex];
       this.messageWaiters.splice(waiterIndex, 1);
-      waiter.resolve(parsed.payload);
+      waiter.resolve(payload);
     } else {
       this.messageQueue.push({
-        type: parsed.messageType,
-        payload: parsed.payload,
+        type: messageType,
+        payload,
       });
     }
   }
@@ -115,7 +181,6 @@ export class TestClient {
     expectedType: number,
     timeoutMs: number = 5000,
   ): Promise<Uint8Array> {
-    // Check queue first
     const queuedIndex = this.messageQueue.findIndex(
       (m) => m.type === expectedType,
     );
@@ -135,7 +200,6 @@ export class TestClient {
       };
 
       const timeout = setTimeout(() => {
-        // Remove the exact waiter by identity
         const index = this.messageWaiters.findIndex((w) => w === waiter);
         if (index !== -1) {
           this.messageWaiters.splice(index, 1);
@@ -151,14 +215,40 @@ export class TestClient {
     });
   }
 
-  async handshake() {
-    const hello = Hello.create({
+  async handshake(): Promise<v1.Welcome> {
+    const hello = v1.Hello.create({
       protocolVersion: "1.0",
       clientVersion: "test-client-1.0",
     });
-    this.send(MessageType.MSG_HELLO, hello, Hello);
+
+    this.send(MessageType.MSG_HELLO, hello, v1.Hello);
 
     const payload = await this.waitForMessage(MessageType.MSG_WELCOME);
-    return Welcome.decode(payload);
+    const welcome = v1.Welcome.decode(payload);
+
+    if (!welcome.sessionId || welcome.sessionId.length !== 16) {
+      throw new Error("Invalid session ID received from server");
+    }
+
+    this.derivedKey = deriveSessionKey(
+      this.encryptionKey,
+      Buffer.from(welcome.sessionId),
+    );
+    this.isEncrypted = true;
+    this.messageCount = 0;
+
+    return welcome;
+  }
+
+  getSessionInfo(): {
+    isEncrypted: boolean;
+    messageCount: number;
+    hasDerivedKey: boolean;
+  } {
+    return {
+      isEncrypted: this.isEncrypted,
+      messageCount: this.messageCount,
+      hasDerivedKey: this.derivedKey !== null,
+    };
   }
 }

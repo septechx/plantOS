@@ -1,4 +1,10 @@
-import { MessageType, ErrorCode } from "@plantos/admin-proto";
+import {
+  MessageType,
+  v1,
+  encodeUnencryptedMessage,
+  encodeEncryptedMessage,
+  encryptMessage,
+} from "@plantos/admin-proto";
 import {
   MessageHandler,
   HandlerContext,
@@ -7,11 +13,8 @@ import {
   ErrorResponse,
   Session,
 } from "../types";
-import {
-  encodeUnencryptedMessage,
-  encodeEncryptedMessage,
-  encryptMessage,
-} from "../encryption";
+
+const { ErrorCode } = v1;
 
 // Type for protobuf static classes
 type ProtobufClass = {
@@ -25,6 +28,7 @@ interface RegisteredHandler {
   responseClass?: ProtobufClass;
   handler: MessageHandler;
   requiresEncryption: boolean;
+  isHandshake: boolean;
 }
 
 export class HandlerRegistry {
@@ -38,7 +42,7 @@ export class HandlerRegistry {
     requestClass: ProtobufClass,
     responseClass: ProtobufClass | undefined,
     handler: MessageHandler<TRequest, HandlerResult<TResponse>>,
-    options: { requiresEncryption?: boolean } = {},
+    options: { requiresEncryption?: boolean; isHandshake?: boolean } = {},
   ): void {
     this.handlers.set(messageType, {
       messageType,
@@ -46,6 +50,7 @@ export class HandlerRegistry {
       responseClass,
       handler: handler as MessageHandler,
       requiresEncryption: options.requiresEncryption ?? true,
+      isHandshake: options.isHandshake ?? false,
     });
   }
 
@@ -114,18 +119,24 @@ export class HandlerRegistry {
           .encode(result)
           .finish();
 
-        // Determine message type for response
         const responseMessageType = this.getResponseMessageType(messageType);
         if (responseMessageType === null) {
           console.error(`No response message type mapping for ${messageType}`);
           return null;
         }
 
-        return this.encodeResponse(
+        const encoded = this.encodeResponse(
           responseMessageType,
           responsePayload,
           session,
+          registration.isHandshake,
         );
+
+        if (registration.isHandshake) {
+          session.isEncrypted = true;
+        }
+
+        return encoded;
       }
 
       return null;
@@ -169,8 +180,9 @@ export class HandlerRegistry {
     messageType: number,
     payload: Uint8Array,
     session: Session,
+    isHandshake: boolean = false,
   ): Uint8Array {
-    if (session.isEncrypted) {
+    if (session.isEncrypted && !isHandshake) {
       const encrypted = encryptMessage(
         session.derivedKey,
         Buffer.from(payload),

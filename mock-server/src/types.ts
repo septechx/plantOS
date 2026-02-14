@@ -1,21 +1,10 @@
-import {
-  plantos,
-  google,
-  v1 as v1Namespace,
-  common as commonNamespace,
+import { google, v1 } from "@plantos/admin-proto";
+
+export {
+  MessageType,
+  getMessageTypeName,
+  EncryptedMessage,
 } from "@plantos/admin-proto";
-
-export { MessageType, getMessageTypeName } from "@plantos/admin-proto";
-export { ErrorCode } from "@plantos/admin-proto";
-
-export const v1 = v1Namespace;
-export const common = commonNamespace;
-
-export const ZoneUpdateChangeType = plantos.admin.v1.ZoneUpdate.ChangeType;
-export const ModuleUpdateChangeType = plantos.admin.v1.ModuleUpdate.ChangeType;
-
-export const Status = v1.Status;
-export const StatisticType = v1.StatisticType;
 
 export const {
   Hello,
@@ -141,13 +130,6 @@ export interface DataStore {
   // Zone settings
   getZoneSettings(zoneId: number): ZoneSettingsType | undefined;
   updateZoneSettings(settings: ZoneSettingsType): boolean;
-}
-
-// Encrypted message format
-export interface EncryptedMessage {
-  nonce: Buffer;
-  ciphertext: Buffer;
-  tag: Buffer;
 }
 
 // Mock server configuration

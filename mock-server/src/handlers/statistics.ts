@@ -1,4 +1,4 @@
-import { MessageType, ErrorCode } from "@plantos/admin-proto";
+import { MessageType, v1 } from "@plantos/admin-proto";
 import {
   GetStatisticsRequest,
   GetStatisticsResponse,
@@ -9,6 +9,8 @@ import {
 } from "../types";
 import { HandlerRegistry } from "./registry";
 import { HandlerContext, ErrorResult } from "../types";
+
+const { ErrorCode } = v1;
 
 export function registerStatisticsHandlers(registry: HandlerRegistry): void {
   // GetStatistics handler

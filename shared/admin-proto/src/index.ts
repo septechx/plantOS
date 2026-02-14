@@ -5,6 +5,19 @@ export { plantos, google } from "./proto-generated/admin";
 export import v1 = plantos.admin.v1;
 export import common = google;
 
+export {
+  EncryptedMessage,
+  deriveSessionKey,
+  generateSessionId,
+  generateNonce,
+  encryptMessage,
+  decryptMessage,
+  encodeEncryptedMessage,
+  parseEncryptedMessage,
+  encodeUnencryptedMessage,
+  parseUnencryptedMessage,
+} from "./encryption";
+
 export const MessageType = {
   MSG_HELLO: 1,
   MSG_LIST_MODULES_REQUEST: 2,
@@ -53,49 +66,6 @@ const MESSAGE_TYPE_NAMES: { [key: number]: string } = {
   [MessageType.MSG_ERROR_RESPONSE]: "ErrorResponse",
 };
 
-export function createMessagePrefix(messageType: number): Uint8Array {
-  const buffer = new ArrayBuffer(4);
-  const view = new DataView(buffer);
-  view.setUint32(0, messageType, true);
-  return new Uint8Array(buffer);
-}
-
-export function encodeMessage(
-  messageType: number,
-  payload: Uint8Array,
-): Uint8Array {
-  const prefix = createMessagePrefix(messageType);
-  const combined = new Uint8Array(prefix.length + payload.length);
-  combined.set(prefix, 0);
-  combined.set(payload, prefix.length);
-  return combined;
-}
-
-export function parseMessage(
-  data: Buffer | Uint8Array,
-): { messageType: number; payload: Uint8Array } | null {
-  if (data.length < 4) {
-    return null;
-  }
-
-  let messageType: number;
-  if (data instanceof Buffer) {
-    messageType = data.readUInt32LE(0);
-  } else {
-    const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
-    messageType = view.getUint32(0, true);
-  }
-
-  const payload = new Uint8Array(data.slice(4));
-
-  return { messageType, payload };
-}
-
 export function getMessageTypeName(messageType: number): string {
   return MESSAGE_TYPE_NAMES[messageType] || `Unknown(${messageType})`;
 }
-
-// Re-export enums for easier access
-export const Status = v1.Status;
-export const StatisticType = v1.StatisticType;
-export const ErrorCode = v1.ErrorCode;
