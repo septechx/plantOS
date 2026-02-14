@@ -10,7 +10,7 @@ import {
   parseUnencryptedMessage,
 } from "@plantos/admin-proto";
 
-const MAX_MESSAGE_COUNT = 0xffffffff;
+const MESSAGE_LIMIT = 0x100000000;
 
 export interface TestClientConfig {
   encryptionKey: Buffer;
@@ -28,7 +28,8 @@ export class TestClient {
   private url: string;
   private derivedKey: Buffer | null = null;
   private isEncrypted: boolean = false;
-  private messageCount: number = 0;
+  private sendMessageCount: number = 0;
+  private recvMessageCount: number = 0;
 
   constructor(config: TestClientConfig) {
     if (config.encryptionKey.length !== 32) {
@@ -70,9 +71,14 @@ export class TestClient {
       }
     }
 
+    if (this.ws) {
+      this.ws.removeAllListeners();
+    }
+
     this.ws = new WebSocket(this.url);
     this.ws.on("message", (data: Buffer) => this.handleMessage(data));
     this.ws.on("error", (err) => console.error("WS Error:", err));
+    this.ws.on("close", () => this.handleClose());
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(
@@ -96,7 +102,22 @@ export class TestClient {
     this.messageWaiters = [];
     this.derivedKey = null;
     this.isEncrypted = false;
-    this.messageCount = 0;
+    this.sendMessageCount = 0;
+    this.recvMessageCount = 0;
+  }
+
+  private handleClose() {
+    const waiters = this.messageWaiters;
+    this.messageQueue = [];
+    this.messageWaiters = [];
+    this.derivedKey = null;
+    this.isEncrypted = false;
+    this.sendMessageCount = 0;
+    this.recvMessageCount = 0;
+
+    for (const waiter of waiters) {
+      waiter.resolve = () => {};
+    }
   }
 
   send<T>(
@@ -109,7 +130,7 @@ export class TestClient {
     }
 
     if (this.isEncrypted) {
-      if (this.messageCount >= MAX_MESSAGE_COUNT) {
+      if (this.sendMessageCount >= MESSAGE_LIMIT) {
         throw new Error("Session message limit exceeded (2^32 messages)");
       }
 
@@ -118,7 +139,7 @@ export class TestClient {
       const encoded = encodeEncryptedMessage(type, encrypted);
 
       this.ws.send(encoded);
-      this.messageCount++;
+      this.sendMessageCount++;
     } else {
       const payload = encoder.encode(message).finish();
       const encoded = encodeUnencryptedMessage(type, payload);
@@ -131,6 +152,12 @@ export class TestClient {
     let payload: Uint8Array;
 
     if (this.isEncrypted) {
+      if (this.recvMessageCount >= MESSAGE_LIMIT) {
+        console.error("Session message limit exceeded");
+        this.close();
+        return;
+      }
+
       const parsed = parseEncryptedMessage(data);
       if (!parsed) {
         console.error("Failed to parse encrypted message");
@@ -145,12 +172,7 @@ export class TestClient {
         return;
       }
 
-      if (this.messageCount >= MAX_MESSAGE_COUNT) {
-        console.error("Session message limit exceeded");
-        this.close();
-        return;
-      }
-      this.messageCount++;
+      this.recvMessageCount++;
     } else {
       const parsed = parseUnencryptedMessage(data);
       if (!parsed) {
@@ -235,19 +257,22 @@ export class TestClient {
       Buffer.from(welcome.sessionId),
     );
     this.isEncrypted = true;
-    this.messageCount = 0;
+    this.sendMessageCount = 0;
+    this.recvMessageCount = 0;
 
     return welcome;
   }
 
   getSessionInfo(): {
     isEncrypted: boolean;
-    messageCount: number;
+    sendMessageCount: number;
+    recvMessageCount: number;
     hasDerivedKey: boolean;
   } {
     return {
       isEncrypted: this.isEncrypted,
-      messageCount: this.messageCount,
+      sendMessageCount: this.sendMessageCount,
+      recvMessageCount: this.recvMessageCount,
       hasDerivedKey: this.derivedKey !== null,
     };
   }

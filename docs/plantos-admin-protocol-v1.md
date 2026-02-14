@@ -657,7 +657,7 @@ Retrieves thresholds, and notification settings.
 
 Updates zone configuration.
 
-### 4.7 Server-Push Updates (Broadcasts)
+### 4.6 Server-Push Updates (Broadcasts)
 
 The hub broadcasts updates to all connected clients when state changes occur.
 

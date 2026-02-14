@@ -3,7 +3,6 @@ syntax = "proto3";
 package plantos.admin.v1;
 
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/duration.proto";
 
 option java_package = "com.siesque.plantos.proto.admin.v1";
 option java_multiple_files = true;

@@ -56,11 +56,7 @@ const EXTERNAL_SERVER_KEY = process.env.PLANTOS_ENCRYPTION_KEY
 const USE_EXTERNAL_SERVER = !!EXTERNAL_SERVER_URL && !!EXTERNAL_SERVER_KEY;
 
 function arraysEqual(a: Uint8Array | Buffer, b: Uint8Array | Buffer): boolean {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false;
-  }
-  return true;
+  return Buffer.from(a).equals(Buffer.from(b));
 }
 
 async function wait(ms: number): Promise<void> {
@@ -318,7 +314,6 @@ describe("Encrypted Protocol Integration", () => {
   });
 
   afterAll(async () => {
-    client?.close();
     if (server) {
       await server.stop();
       await wait(100);
@@ -763,7 +758,7 @@ describe("Encrypted Protocol Integration", () => {
       await testClient.connect();
       await testClient.handshake();
 
-      const initialCount = testClient.getSessionInfo().messageCount;
+      const initialCount = testClient.getSessionInfo().sendMessageCount;
 
       testClient.send(
         MessageType.MSG_LIST_ZONES_REQUEST,
@@ -772,7 +767,7 @@ describe("Encrypted Protocol Integration", () => {
       );
       await testClient.waitForMessage(MessageType.MSG_LIST_ZONES_RESPONSE);
 
-      const afterCount = testClient.getSessionInfo().messageCount;
+      const afterCount = testClient.getSessionInfo().sendMessageCount;
       expect(afterCount).toBeGreaterThan(initialCount);
 
       testClient.close();
@@ -837,9 +832,11 @@ describe("Message Counter Limits", () => {
       port: TEST_PORT + 100,
     });
 
-    (client as any).messageCount = 0xffffffff;
+    (client as any).sendMessageCount = 0xffffffff;
     (client as any).isEncrypted = true;
     (client as any).derivedKey = key;
+    // Intentionally omits ws.send: TestClient.send checks sendMessageCount overflow BEFORE calling ws.send,
+    // so the test verifies the early-exit path without needing a real or stubbed send implementation.
     (client as any).ws = { readyState: WebSocket.OPEN };
 
     expect(() => {
