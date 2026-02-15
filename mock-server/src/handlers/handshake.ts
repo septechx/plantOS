@@ -1,7 +1,14 @@
 import { MessageType, v1 } from "@plantos/admin-proto";
-import { Hello, Welcome, Timestamp } from "../types";
+import {
+  Hello,
+  Welcome,
+  Timestamp,
+  createErrorResult,
+  success,
+  failure,
+} from "../types";
 import { HandlerRegistry } from "./registry";
-import { HandlerContext, ErrorResult } from "../types";
+import { HandlerContext } from "../types";
 
 const { ErrorCode } = v1;
 
@@ -29,10 +36,12 @@ export function registerHandshakeHandlers(
       }
 
       if (request.protocolVersion !== "1.0") {
-        return {
-          code: ErrorCode.ERROR_CODE_VERSION_MISMATCH,
-          message: `Protocol version ${request.protocolVersion} not supported. Expected 1..0.`,
-        } as ErrorResult;
+        return failure(
+          createErrorResult(
+            ErrorCode.ERROR_CODE_VERSION_MISMATCH,
+            `Protocol version ${request.protocolVersion} not supported. Expected 1.0.`,
+          ),
+        );
       }
 
       const welcome = new Welcome();
@@ -47,7 +56,9 @@ export function registerHandshakeHandlers(
 
       welcome.sessionId = session.id;
 
-      return welcome;
+      session.isEncrypted = true;
+
+      return success(welcome);
     },
     { requiresEncryption: false, isHandshake: true },
   );

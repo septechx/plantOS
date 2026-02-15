@@ -59,6 +59,12 @@ export interface HandlerContext {
   broadcast: BroadcastFunction;
 }
 
+// Broadcast context for server-initiated broadcasts (no session required)
+export interface BroadcastContext {
+  store: DataStore;
+  broadcast: BroadcastFunction;
+}
+
 export type BroadcastFunction = (
   messageType: number,
   payload: Uint8Array,
@@ -69,15 +75,7 @@ export type BroadcastFunction = (
 export type MessageHandler<TRequest = unknown, TResponse = unknown> = (
   request: TRequest,
   context: HandlerContext,
-) => TResponse | Promise<TResponse>;
-
-// Handler registration
-export interface HandlerRegistration {
-  messageType: number;
-  requestClass: protobuf.Type;
-  responseClass?: protobuf.Type;
-  handler: MessageHandler;
-}
+) => HandlerResult<TResponse> | Promise<HandlerResult<TResponse>>;
 
 // Mock data definitions
 export interface StatisticDefinition {
@@ -149,5 +147,23 @@ export interface ErrorResult {
   requestType?: number;
 }
 
+export function createErrorResult(
+  code: number,
+  message: string,
+  requestType?: number,
+): ErrorResult {
+  return { code, message, requestType };
+}
+
 // Handler result type
-export type HandlerResult<T> = T | ErrorResult;
+export type HandlerResult<T> =
+  | { ok: true; value: T }
+  | { ok: false; error: ErrorResult };
+
+export function success<T>(value: T): HandlerResult<T> {
+  return { ok: true, value };
+}
+
+export function failure(error: ErrorResult): HandlerResult<never> {
+  return { ok: false, error };
+}

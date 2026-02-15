@@ -6,9 +6,14 @@ import {
   Timestamp,
   Statistic,
   StatisticTypeObj,
+  createErrorResult,
+  BroadcastContext,
+  success,
+  failure,
 } from "../types";
+import { timestampToMs } from "../utils";
 import { HandlerRegistry } from "./registry";
-import { HandlerContext, ErrorResult } from "../types";
+import { HandlerContext } from "../types";
 
 const { ErrorCode } = v1;
 
@@ -42,31 +47,35 @@ export function registerStatisticsHandlers(registry: HandlerRegistry): void {
       // Check if zone exists
       const zone = store.getZoneById(zoneId);
       if (!zone) {
-        return {
-          code: ErrorCode.ERROR_CODE_ZONE_NOT_FOUND,
-          message: `Zone with ID ${zoneId} not found`,
-        } as ErrorResult;
+        return failure(
+          createErrorResult(
+            ErrorCode.ERROR_CODE_ZONE_NOT_FOUND,
+            `Zone with ID ${zoneId} not found`,
+          ),
+        );
       }
 
       // Validate time range
       if (Boolean(from) !== Boolean(to)) {
-        return {
-          code: ErrorCode.ERROR_CODE_INVALID_TIME_RANGE,
-          message: "Invalid time range: both from and to are required",
-        } as ErrorResult;
+        return failure(
+          createErrorResult(
+            ErrorCode.ERROR_CODE_INVALID_TIME_RANGE,
+            "Invalid time range: both from and to are required",
+          ),
+        );
       }
 
       if (from && to) {
-        const fromTime =
-          (Number(from.seconds) || 0) * 1000 + (from.nanos ?? 0) / 1_000_000;
-        const toTime =
-          (Number(to.seconds) || 0) * 1000 + (to.nanos ?? 0) / 1_000_000;
+        const fromTime = timestampToMs(from);
+        const toTime = timestampToMs(to);
 
         if (fromTime > toTime) {
-          return {
-            code: ErrorCode.ERROR_CODE_INVALID_TIME_RANGE,
-            message: "Invalid time range: from is after to",
-          } as ErrorResult;
+          return failure(
+            createErrorResult(
+              ErrorCode.ERROR_CODE_INVALID_TIME_RANGE,
+              "Invalid time range: from is after to",
+            ),
+          );
         }
       }
 
@@ -85,10 +94,8 @@ export function registerStatisticsHandlers(registry: HandlerRegistry): void {
 
       // Filter by time range if specified
       if (from && to) {
-        const fromTime =
-          (Number(from.seconds) || 0) * 1000 + (from.nanos ?? 0) / 1_000_000;
-        const toTime =
-          (Number(to.seconds) || 0) * 1000 + (to.nanos ?? 0) / 1_000_000;
+        const fromTime = timestampToMs(from);
+        const toTime = timestampToMs(to);
 
         // Create new statistics with filtered history
         statistics = statistics.map((stat: StatisticTypeObj) => {
@@ -96,9 +103,7 @@ export function registerStatisticsHandlers(registry: HandlerRegistry): void {
           newStat.type = stat.type;
           newStat.history = stat.history.filter((dp) => {
             if (!dp.timestamp) return false;
-            const dpTime =
-              (Number(dp.timestamp.seconds) || 0) * 1000 +
-              (dp.timestamp.nanos ?? 0) / 1_000_000;
+            const dpTime = timestampToMs(dp.timestamp);
             return dpTime >= fromTime && dpTime <= toTime;
           });
           return newStat;
@@ -111,7 +116,7 @@ export function registerStatisticsHandlers(registry: HandlerRegistry): void {
       }
 
       response.statistics = statistics;
-      return response;
+      return success(response);
     },
   );
 }
@@ -120,7 +125,7 @@ export function registerStatisticsHandlers(registry: HandlerRegistry): void {
 export function broadcastStatisticsUpdate(
   zoneId: number,
   statistics: StatisticTypeObj[],
-  context: HandlerContext,
+  context: BroadcastContext,
 ): void {
   const { broadcast } = context;
 
@@ -157,7 +162,7 @@ function applyAggregation(
   }
 
   // TODO: Implement actual aggregation logic
-  console.log(
+  console.warn(
     `Aggregation level ${aggregation} requested (not fully implemented)`,
   );
   return statistics;

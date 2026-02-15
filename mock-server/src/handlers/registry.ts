@@ -16,17 +16,16 @@ import {
 
 const { ErrorCode } = v1;
 
-// Type for protobuf static classes
 type ProtobufClass = {
   decode(reader: Uint8Array | Buffer, length?: number): unknown;
   encode(message: unknown, writer?: unknown): { finish(): Uint8Array };
 };
 
-interface RegisteredHandler {
+interface RegisteredHandler<TResponse = unknown> {
   messageType: number;
   requestClass: ProtobufClass;
   responseClass?: ProtobufClass;
-  handler: MessageHandler;
+  handler: MessageHandler<unknown, TResponse>;
   requiresEncryption: boolean;
   isHandshake: boolean;
 }
@@ -41,14 +40,14 @@ export class HandlerRegistry {
     messageType: number,
     requestClass: ProtobufClass,
     responseClass: ProtobufClass | undefined,
-    handler: MessageHandler<TRequest, HandlerResult<TResponse>>,
+    handler: MessageHandler<TRequest, TResponse>,
     options: { requiresEncryption?: boolean; isHandshake?: boolean } = {},
   ): void {
     this.handlers.set(messageType, {
       messageType,
       requestClass,
       responseClass,
-      handler: handler as MessageHandler,
+      handler: handler as MessageHandler<unknown, unknown>,
       requiresEncryption: options.requiresEncryption ?? true,
       isHandshake: options.isHandshake ?? false,
     });
@@ -94,16 +93,19 @@ export class HandlerRegistry {
 
     try {
       // Decode request
-      const request = registration.requestClass.decode(payload) as TRequest;
+      const request = registration.requestClass.decode(payload);
 
       // Call handler
-      const result = await registration.handler(request, context);
+      const result = (await registration.handler(
+        request,
+        context,
+      )) as HandlerResult<unknown>;
 
       // Check if result is an error
-      if (this.isErrorResult(result)) {
+      if (!result.ok) {
         return this.createErrorResponse(
-          result.code,
-          result.message,
+          result.error.code,
+          result.error.message,
           messageType,
           session,
         );
@@ -112,17 +114,22 @@ export class HandlerRegistry {
       // Encode response if there is one
       if (
         registration.responseClass &&
-        result !== undefined &&
-        result !== null
+        result.value !== undefined &&
+        result.value !== null
       ) {
         const responsePayload = registration.responseClass
-          .encode(result)
+          .encode(result.value)
           .finish();
 
         const responseMessageType = this.getResponseMessageType(messageType);
         if (responseMessageType === null) {
           console.error(`No response message type mapping for ${messageType}`);
-          return null;
+          return this.createErrorResponse(
+            ErrorCode.ERROR_CODE_INTERNAL_ERROR,
+            `No response message type mapping for ${messageType}`,
+            messageType,
+            session,
+          );
         }
 
         const encoded = this.encodeResponse(
@@ -131,10 +138,6 @@ export class HandlerRegistry {
           session,
           registration.isHandshake,
         );
-
-        if (registration.isHandshake) {
-          session.isEncrypted = true;
-        }
 
         return encoded;
       }
@@ -194,20 +197,6 @@ export class HandlerRegistry {
   }
 
   /**
-   * Check if a result is an error.
-   */
-  private isErrorResult(result: unknown): result is ErrorResult {
-    return (
-      result !== null &&
-      typeof result === "object" &&
-      "code" in result &&
-      "message" in result &&
-      typeof (result as ErrorResult).code === "number" &&
-      typeof (result as ErrorResult).message === "string"
-    );
-  }
-
-  /**
    * Get the response message type for a request message type.
    */
   private getResponseMessageType(requestType: number): number | null {
@@ -229,6 +218,3 @@ export class HandlerRegistry {
     return requestResponseMap[requestType] ?? null;
   }
 }
-
-// Helper type for request type inference
-type TRequest = unknown;

@@ -8,6 +8,7 @@ import {
   ModuleType,
   StatisticTypeObj,
 } from "./types";
+import { timestampToMs } from "./utils";
 
 const Timestamp = common.protobuf.Timestamp;
 const { StatisticType } = v1;
@@ -91,9 +92,7 @@ export class InMemoryDataStore implements DataStore {
     if (zone.lastWatered !== undefined) {
       const ts = zone.lastWatered;
       if (ts && ts.seconds !== undefined && ts.seconds !== null) {
-        existing.lastWatered = Math.floor(
-          Number(ts.seconds) * 1000 + (ts.nanos || 0) / 1_000_000,
-        );
+        existing.lastWatered = Math.floor(timestampToMs(ts));
       }
     }
 
@@ -285,6 +284,7 @@ export class InMemoryDataStore implements DataStore {
   updateZoneSettings(
     settings: ReturnType<typeof v1.ZoneSettings.create>,
   ): boolean {
+    if (!this.storage.zones.has(settings.zoneId)) return false;
     this.storage.zoneSettings.set(settings.zoneId, settings);
     return true;
   }

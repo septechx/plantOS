@@ -7,9 +7,12 @@ import {
   ZoneUpdate,
   Timestamp,
   ZoneType,
+  createErrorResult,
+  success,
+  failure,
 } from "../types";
 import { HandlerRegistry } from "./registry";
-import { HandlerContext, ErrorResult } from "../types";
+import { HandlerContext } from "../types";
 
 const { ErrorCode } = v1;
 
@@ -21,7 +24,11 @@ export function registerZoneHandlers(registry: HandlerRegistry): void {
     ListZonesResponse,
     (request: { moduleId?: number | null }, context: HandlerContext) => {
       const { store } = context;
-      const moduleId = request.moduleId ?? null;
+      // Explicit presence check: treat 0 as a valid filter value, only null/undefined means "all"
+      const moduleId =
+        request.moduleId !== undefined && request.moduleId !== null
+          ? request.moduleId
+          : null;
 
       console.log(`ListZonesRequest: moduleId=${moduleId ?? "all"}`);
 
@@ -33,7 +40,7 @@ export function registerZoneHandlers(registry: HandlerRegistry): void {
       }
 
       response.zones = zones;
-      return response;
+      return success(response);
     },
   );
 
@@ -50,15 +57,17 @@ export function registerZoneHandlers(registry: HandlerRegistry): void {
 
       const zone = store.getZoneById(zoneId);
       if (!zone) {
-        return {
-          code: ErrorCode.ERROR_CODE_ZONE_NOT_FOUND,
-          message: `Zone with ID ${zoneId} not found`,
-        } as ErrorResult;
+        return failure(
+          createErrorResult(
+            ErrorCode.ERROR_CODE_ZONE_NOT_FOUND,
+            `Zone with ID ${zoneId} not found`,
+          ),
+        );
       }
 
       const response = new GetZoneResponse();
       response.zone = zone;
-      return response;
+      return success(response);
     },
   );
 }

@@ -7,9 +7,12 @@ import {
   ZoneSettings,
   ZoneSettingsType,
   ZoneUpdate,
+  createErrorResult,
+  success,
+  failure,
 } from "../types";
 import { HandlerRegistry } from "./registry";
-import { HandlerContext, ErrorResult } from "../types";
+import { HandlerContext } from "../types";
 import { broadcastZoneUpdate } from "./zones";
 
 const { ErrorCode } = v1;
@@ -29,10 +32,12 @@ export function registerSettingsHandlers(registry: HandlerRegistry): void {
       // Check if zone exists
       const zone = store.getZoneById(zoneId);
       if (!zone) {
-        return {
-          code: ErrorCode.ERROR_CODE_ZONE_NOT_FOUND,
-          message: `Zone with ID ${zoneId} not found`,
-        } as ErrorResult;
+        return failure(
+          createErrorResult(
+            ErrorCode.ERROR_CODE_ZONE_NOT_FOUND,
+            `Zone with ID ${zoneId} not found`,
+          ),
+        );
       }
 
       // Get or create settings for this zone
@@ -46,7 +51,7 @@ export function registerSettingsHandlers(registry: HandlerRegistry): void {
 
       const response = new GetZoneSettingsResponse();
       response.settings = settings;
-      return response;
+      return success(response);
     },
   );
 
@@ -59,10 +64,12 @@ export function registerSettingsHandlers(registry: HandlerRegistry): void {
       const { store } = context;
 
       if (!request.settings) {
-        return {
-          code: ErrorCode.ERROR_CODE_INVALID_REQUEST,
-          message: "Settings are required",
-        } as ErrorResult;
+        return failure(
+          createErrorResult(
+            ErrorCode.ERROR_CODE_INVALID_REQUEST,
+            "Settings are required",
+          ),
+        );
       }
 
       const zoneId = request.settings.zoneId;
@@ -71,45 +78,12 @@ export function registerSettingsHandlers(registry: HandlerRegistry): void {
       // Check if zone exists
       const zone = store.getZoneById(zoneId);
       if (!zone) {
-        return {
-          code: ErrorCode.ERROR_CODE_ZONE_NOT_FOUND,
-          message: `Zone with ID ${zoneId} not found`,
-        } as ErrorResult;
-      }
-
-      // Validate thresholds
-      const thresholds = request.settings.thresholds;
-      if (thresholds) {
-        const minTemp = thresholds.minTemperature;
-        const maxTemp = thresholds.maxTemperature;
-        if (
-          minTemp !== null &&
-          minTemp !== undefined &&
-          maxTemp !== null &&
-          maxTemp !== undefined &&
-          minTemp > maxTemp
-        ) {
-          return {
-            code: ErrorCode.ERROR_CODE_INVALID_REQUEST,
-            message: "min_temperature cannot be greater than max_temperature",
-          } as ErrorResult;
-        }
-
-        const minMoisture = thresholds.minSoilMoisture;
-        const maxMoisture = thresholds.maxSoilMoisture;
-        if (
-          minMoisture !== null &&
-          minMoisture !== undefined &&
-          maxMoisture !== null &&
-          maxMoisture !== undefined &&
-          minMoisture > maxMoisture
-        ) {
-          return {
-            code: ErrorCode.ERROR_CODE_INVALID_REQUEST,
-            message:
-              "min_soil_moisture cannot be greater than max_soil_moisture",
-          } as ErrorResult;
-        }
+        return failure(
+          createErrorResult(
+            ErrorCode.ERROR_CODE_ZONE_NOT_FOUND,
+            `Zone with ID ${zoneId} not found`,
+          ),
+        );
       }
 
       // Update settings
@@ -118,6 +92,44 @@ export function registerSettingsHandlers(registry: HandlerRegistry): void {
         existingSettings || createDefaultSettings(zoneId),
         request.settings,
       );
+
+      // Validate merged thresholds (check after merge to catch inversions)
+      const mergedThresholds = updatedSettings.thresholds;
+      if (mergedThresholds) {
+        const minTemp = mergedThresholds.minTemperature;
+        const maxTemp = mergedThresholds.maxTemperature;
+        if (
+          minTemp !== null &&
+          minTemp !== undefined &&
+          maxTemp !== null &&
+          maxTemp !== undefined &&
+          minTemp > maxTemp
+        ) {
+          return failure(
+            createErrorResult(
+              ErrorCode.ERROR_CODE_INVALID_REQUEST,
+              "min_temperature cannot be greater than max_temperature",
+            ),
+          );
+        }
+
+        const minMoisture = mergedThresholds.minSoilMoisture;
+        const maxMoisture = mergedThresholds.maxSoilMoisture;
+        if (
+          minMoisture !== null &&
+          minMoisture !== undefined &&
+          maxMoisture !== null &&
+          maxMoisture !== undefined &&
+          minMoisture > maxMoisture
+        ) {
+          return failure(
+            createErrorResult(
+              ErrorCode.ERROR_CODE_INVALID_REQUEST,
+              "min_soil_moisture cannot be greater than max_soil_moisture",
+            ),
+          );
+        }
+      }
 
       store.updateZoneSettings(updatedSettings);
 
@@ -135,7 +147,7 @@ export function registerSettingsHandlers(registry: HandlerRegistry): void {
       response.updatedSettings = updatedSettings;
 
       console.log(`Updated settings for zone ${zoneId}`);
-      return response;
+      return success(response);
     },
   );
 }
@@ -165,8 +177,8 @@ function mergeSettings(
   existing: ZoneSettingsType,
   updates: ZoneSettingsType,
 ): ZoneSettingsType {
-  const merged = new ZoneSettings();
-  merged.zoneId = existing.zoneId;
+  // Shallow-clone existing to preserve all current fields (including future additions)
+  const merged = ZoneSettings.fromObject(ZoneSettings.toObject(existing));
 
   // Merge thresholds
   if (updates.thresholds) {
@@ -188,15 +200,18 @@ function mergeSettings(
       existing.thresholds?.maxSoilMoisture ??
       80;
     merged.thresholds = thresholds;
-  } else {
-    merged.thresholds = existing.thresholds;
   }
 
   // Merge notification settings
-  merged.notifyOnError =
-    updates.notifyOnError ?? existing.notifyOnError ?? true;
-  merged.notifyOnLowBattery =
-    updates.notifyOnLowBattery ?? existing.notifyOnLowBattery ?? true;
+  if (updates.notifyOnError !== null && updates.notifyOnError !== undefined) {
+    merged.notifyOnError = updates.notifyOnError;
+  }
+  if (
+    updates.notifyOnLowBattery !== null &&
+    updates.notifyOnLowBattery !== undefined
+  ) {
+    merged.notifyOnLowBattery = updates.notifyOnLowBattery;
+  }
 
   return merged;
 }

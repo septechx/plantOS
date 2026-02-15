@@ -832,7 +832,7 @@ describe("Message Counter Limits", () => {
       port: TEST_PORT + 100,
     });
 
-    (client as any).sendMessageCount = 0xffffffff;
+    (client as any).sendMessageCount = 0x100000000;
     (client as any).isEncrypted = true;
     (client as any).derivedKey = key;
     // Intentionally omits ws.send: TestClient.send checks sendMessageCount overflow BEFORE calling ws.send,

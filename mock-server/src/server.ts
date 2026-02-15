@@ -50,6 +50,7 @@ export class PlantOSMockServer {
     this.store = new InMemoryDataStore();
     this.registry = new HandlerRegistry();
     this.broadcastManager = new BroadcastManager();
+    this.broadcastManager.setSessionManager(this.sessionManager);
 
     // Register all handlers
     this.registerHandlers();
@@ -92,14 +93,13 @@ export class PlantOSMockServer {
         );
         console.log(`Broadcast interval: ${this.config.broadcastIntervalMs}ms`);
         console.log("");
+        this.startBroadcasts();
         resolve();
       });
 
       this.wss.on("connection", (ws: WebSocket) => {
         this.handleConnection(ws);
       });
-
-      this.startBroadcasts();
 
       process.on("SIGINT", () => this.shutdown());
       process.on("SIGTERM", () => this.shutdown());
@@ -269,7 +269,6 @@ export class PlantOSMockServer {
       for (const zone of zones) {
         const statistics = this.store.getCurrentStatistics(zone.id);
         broadcastStatisticsUpdate(zone.id, statistics, {
-          session: null as any, // Not used for broadcasts
           store: this.store,
           broadcast: (
             msgType: number,

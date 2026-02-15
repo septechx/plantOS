@@ -1,4 +1,5 @@
 import { Session } from "./types";
+import { SessionManager } from "./session";
 import {
   encodeEncryptedMessage,
   encryptMessage,
@@ -14,6 +15,11 @@ interface Client {
 
 export class BroadcastManager {
   private clients: Map<string, Client> = new Map();
+  private sessionManager: SessionManager | null = null;
+
+  setSessionManager(sessionManager: SessionManager): void {
+    this.sessionManager = sessionManager;
+  }
 
   /**
    * Register a new client connection.
@@ -48,6 +54,15 @@ export class BroadcastManager {
       // Only send to clients that have completed handshake
       if (!client.session.isEncrypted) continue;
 
+      if (this.sessionManager) {
+        if (!this.sessionManager.incrementMessageCount(client.session)) {
+          console.error(
+            `Session ${key} message limit exceeded, skipping broadcast`,
+          );
+          continue;
+        }
+      }
+
       try {
         const encrypted = encryptMessage(
           client.session.derivedKey,
@@ -77,6 +92,13 @@ export class BroadcastManager {
       let message: Uint8Array;
 
       if (session.isEncrypted) {
+        if (this.sessionManager) {
+          if (!this.sessionManager.incrementMessageCount(session)) {
+            console.error(`Session ${sessionKey} message limit exceeded`);
+            return;
+          }
+        }
+
         const encrypted = encryptMessage(
           session.derivedKey,
           Buffer.from(payload),

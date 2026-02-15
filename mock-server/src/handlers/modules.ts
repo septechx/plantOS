@@ -4,12 +4,12 @@ import {
   ListModulesResponse,
   GetModuleRequest,
   GetModuleResponse,
-  ModuleUpdate,
-  Timestamp,
-  ModuleType,
+  createErrorResult,
+  success,
+  failure,
 } from "../types";
 import { HandlerRegistry } from "./registry";
-import { HandlerContext, ErrorResult } from "../types";
+import { HandlerContext } from "../types";
 
 const { ErrorCode } = v1;
 
@@ -25,7 +25,7 @@ export function registerModuleHandlers(registry: HandlerRegistry): void {
       const { store } = context;
       const response = new ListModulesResponse();
       response.modules = store.getModules();
-      return response;
+      return success(response);
     },
   );
 
@@ -42,39 +42,17 @@ export function registerModuleHandlers(registry: HandlerRegistry): void {
 
       const module = store.getModuleById(moduleId);
       if (!module) {
-        return {
-          code: ErrorCode.ERROR_CODE_MODULE_NOT_FOUND,
-          message: `Module with ID ${moduleId} not found`,
-        } as ErrorResult;
+        return failure(
+          createErrorResult(
+            ErrorCode.ERROR_CODE_MODULE_NOT_FOUND,
+            `Module with ID ${moduleId} not found`,
+          ),
+        );
       }
 
       const response = new GetModuleResponse();
       response.module = module;
-      return response;
+      return success(response);
     },
   );
-}
-
-// Helper function to broadcast module updates
-export function broadcastModuleUpdate(
-  moduleId: number,
-  module: ModuleType,
-  changeType: number, // ModuleUpdateChangeType enum value
-  context: HandlerContext,
-): void {
-  const { broadcast } = context;
-
-  const update = new ModuleUpdate();
-  update.moduleId = moduleId;
-  update.module = module;
-  update.changeType = changeType;
-
-  const now = new Date();
-  update.timestamp = Timestamp.fromObject({
-    seconds: Math.floor(now.getTime() / 1000),
-    nanos: (now.getTime() % 1000) * 1_000_000,
-  });
-
-  const payload = ModuleUpdate.encode(update).finish();
-  broadcast(MessageType.MSG_MODULE_UPDATE, payload);
 }

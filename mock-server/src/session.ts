@@ -55,7 +55,7 @@ export class SessionManager {
    * Returns false if session has reached max messages (2^32).
    */
   incrementMessageCount(session: Session): boolean {
-    if (session.messageCount >= 0xffffffff) {
+    if (session.messageCount >= 0x100000000) {
       return false;
     }
     session.messageCount++;
