@@ -9,7 +9,6 @@ import {
   MessageHandler,
   HandlerContext,
   HandlerResult,
-  ErrorResult,
   ErrorResponse,
   Session,
 } from "../types";
