@@ -77,11 +77,11 @@ export function encodeEncryptedMessage(
   view.setUint32(0, messageType, true);
 
   let offset = 4;
-  result.set(new Uint8Array(encrypted.nonce), offset);
+  result.set(encrypted.nonce, offset);
   offset += encrypted.nonce.length;
-  result.set(new Uint8Array(encrypted.ciphertext), offset);
+  result.set(encrypted.ciphertext, offset);
   offset += encrypted.ciphertext.length;
-  result.set(new Uint8Array(encrypted.tag), offset);
+  result.set(encrypted.tag, offset);
 
   return result;
 }
@@ -99,7 +99,7 @@ export function parseEncryptedMessage(
   const messageType = buffer.readUInt32LE(0);
 
   let offset = 4;
-  const nonce = buffer.subarray(offset, offset + NONCE_SIZE);
+  const nonce = Buffer.from(buffer.subarray(offset, offset + NONCE_SIZE));
   offset += NONCE_SIZE;
 
   const ciphertextLength = buffer.length - offset - TAG_SIZE;
@@ -107,10 +107,12 @@ export function parseEncryptedMessage(
     return null;
   }
 
-  const ciphertext = buffer.subarray(offset, offset + ciphertextLength);
+  const ciphertext = Buffer.from(
+    buffer.subarray(offset, offset + ciphertextLength),
+  );
   offset += ciphertextLength;
 
-  const tag = buffer.subarray(offset, offset + TAG_SIZE);
+  const tag = Buffer.from(buffer.subarray(offset, offset + TAG_SIZE));
 
   return {
     messageType,
