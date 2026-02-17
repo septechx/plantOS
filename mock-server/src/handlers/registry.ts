@@ -24,6 +24,7 @@ interface RegisteredHandler<TResponse = unknown> {
   messageType: number;
   requestClass: ProtobufClass;
   responseClass?: ProtobufClass;
+  responseType: number | null;
   handler: MessageHandler<unknown, TResponse>;
   requiresEncryption: boolean;
   isHandshake: boolean;
@@ -40,12 +41,17 @@ export class HandlerRegistry {
     requestClass: ProtobufClass,
     responseClass: ProtobufClass | undefined,
     handler: MessageHandler<TRequest, TResponse>,
-    options: { requiresEncryption?: boolean; isHandshake?: boolean } = {},
+    options: {
+      requiresEncryption?: boolean;
+      isHandshake?: boolean;
+      responseType?: number;
+    } = {},
   ): void {
     this.handlers.set(messageType, {
       messageType,
       requestClass,
       responseClass,
+      responseType: options.responseType ?? null,
       handler: handler as MessageHandler<unknown, unknown>,
       requiresEncryption: options.requiresEncryption ?? true,
       isHandshake: options.isHandshake ?? false,
@@ -138,6 +144,10 @@ export class HandlerRegistry {
           registration.isHandshake,
         );
 
+        if (registration.isHandshake) {
+          session.isEncrypted = true;
+        }
+
         return encoded;
       }
 
@@ -195,25 +205,8 @@ export class HandlerRegistry {
     }
   }
 
-  /**
-   * Get the response message type for a request message type.
-   */
   private getResponseMessageType(requestType: number): number | null {
-    const requestResponseMap: Record<number, number> = {
-      [MessageType.MSG_HELLO]: MessageType.MSG_WELCOME,
-      [MessageType.MSG_LIST_MODULES_REQUEST]:
-        MessageType.MSG_LIST_MODULES_RESPONSE,
-      [MessageType.MSG_GET_MODULE_REQUEST]: MessageType.MSG_GET_MODULE_RESPONSE,
-      [MessageType.MSG_LIST_ZONES_REQUEST]: MessageType.MSG_LIST_ZONES_RESPONSE,
-      [MessageType.MSG_GET_ZONE_REQUEST]: MessageType.MSG_GET_ZONE_RESPONSE,
-      [MessageType.MSG_GET_STATISTICS_REQUEST]:
-        MessageType.MSG_GET_STATISTICS_RESPONSE,
-      [MessageType.MSG_GET_ZONE_SETTINGS_REQUEST]:
-        MessageType.MSG_GET_ZONE_SETTINGS_RESPONSE,
-      [MessageType.MSG_UPDATE_ZONE_SETTINGS_REQUEST]:
-        MessageType.MSG_UPDATE_ZONE_SETTINGS_RESPONSE,
-    };
-
-    return requestResponseMap[requestType] ?? null;
+    const handler = this.handlers.get(requestType);
+    return handler?.responseType ?? null;
   }
 }

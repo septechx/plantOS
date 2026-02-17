@@ -53,6 +53,7 @@ export function registerSettingsHandlers(registry: HandlerRegistry): void {
       response.settings = settings;
       return success(response);
     },
+    { responseType: MessageType.MSG_GET_ZONE_SETTINGS_RESPONSE },
   );
 
   // UpdateZoneSettings handler
@@ -149,10 +150,9 @@ export function registerSettingsHandlers(registry: HandlerRegistry): void {
       console.log(`Updated settings for zone ${zoneId}`);
       return success(response);
     },
+    { responseType: MessageType.MSG_UPDATE_ZONE_SETTINGS_RESPONSE },
   );
 }
-
-// Helper functions
 
 function createDefaultSettings(zoneId: number): ZoneSettingsType {
   const settings = new ZoneSettings();
@@ -175,42 +175,40 @@ function createDefaultSettings(zoneId: number): ZoneSettingsType {
 
 function mergeSettings(
   existing: ZoneSettingsType,
-  updates: ZoneSettingsType,
+  updates: Partial<ZoneSettingsType>,
 ): ZoneSettingsType {
-  // Shallow-clone existing to preserve all current fields (including future additions)
-  const merged = ZoneSettings.fromObject(ZoneSettings.toObject(existing));
+  const merged = new ZoneSettings();
+  Object.assign(merged, existing);
 
-  // Merge thresholds
-  if (updates.thresholds) {
+  if ("thresholds" in updates) {
+    const up = updates.thresholds!;
+    const ex = existing.thresholds ?? {};
+    const defaults: Record<(typeof keys)[number], number> = {
+      minTemperature: 18,
+      maxTemperature: 28,
+      minSoilMoisture: 20,
+      maxSoilMoisture: 80,
+    } as const;
+    const keys = [
+      "minTemperature",
+      "maxTemperature",
+      "minSoilMoisture",
+      "maxSoilMoisture",
+    ] as const;
+
     const thresholds = new ZoneSettings.Thresholds();
-    thresholds.minTemperature =
-      updates.thresholds.minTemperature ??
-      existing.thresholds?.minTemperature ??
-      18;
-    thresholds.maxTemperature =
-      updates.thresholds.maxTemperature ??
-      existing.thresholds?.maxTemperature ??
-      28;
-    thresholds.minSoilMoisture =
-      updates.thresholds.minSoilMoisture ??
-      existing.thresholds?.minSoilMoisture ??
-      20;
-    thresholds.maxSoilMoisture =
-      updates.thresholds.maxSoilMoisture ??
-      existing.thresholds?.maxSoilMoisture ??
-      80;
+    for (const k of keys) {
+      thresholds[k] = up?.[k] ?? ex[k] ?? defaults[k];
+    }
+
     merged.thresholds = thresholds;
   }
 
-  // Merge notification settings
-  if (updates.notifyOnError !== null && updates.notifyOnError !== undefined) {
-    merged.notifyOnError = updates.notifyOnError;
+  if ("notifyOnError" in updates) {
+    merged.notifyOnError = updates.notifyOnError!;
   }
-  if (
-    updates.notifyOnLowBattery !== null &&
-    updates.notifyOnLowBattery !== undefined
-  ) {
-    merged.notifyOnLowBattery = updates.notifyOnLowBattery;
+  if ("notifyOnLowBattery" in updates) {
+    merged.notifyOnLowBattery = updates.notifyOnLowBattery!;
   }
 
   return merged;

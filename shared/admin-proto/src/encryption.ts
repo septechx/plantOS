@@ -142,7 +142,7 @@ export function parseUnencryptedMessage(
 
   const buffer = data instanceof Buffer ? data : Buffer.from(data);
   const messageType = buffer.readUInt32LE(0);
-  const payload = new Uint8Array(buffer.subarray(4));
+  const payload = Uint8Array.from(buffer.subarray(4));
 
   return { messageType, payload };
 }

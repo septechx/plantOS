@@ -100,7 +100,7 @@ export function registerStatisticsHandlers(registry: HandlerRegistry): void {
         // Create new statistics with filtered history
         statistics = statistics.map((stat: StatisticTypeObj) => {
           const newStat = new Statistic();
-          newStat.type = stat.type;
+          Object.assign(newStat, stat);
           newStat.history = stat.history.filter((dp) => {
             if (!dp.timestamp) return false;
             const dpTime = timestampToMs(dp.timestamp);
@@ -118,6 +118,7 @@ export function registerStatisticsHandlers(registry: HandlerRegistry): void {
       response.statistics = statistics;
       return success(response);
     },
+    { responseType: MessageType.MSG_GET_STATISTICS_RESPONSE },
   );
 }
 
@@ -148,19 +149,7 @@ function applyAggregation(
   statistics: StatisticTypeObj[],
   aggregation: number,
 ): StatisticTypeObj[] {
-  // For now, just return the original statistics
-  // Full aggregation implementation would group data points by hour/day/week
-  // and calculate averages
-
-  // AGGREGATION_NONE = 0
-  // AGGREGATION_HOURLY = 1
-  // AGGREGATION_DAILY = 2
-  // AGGREGATION_WEEKLY = 3
-
-  if (aggregation === 0) {
-    return statistics;
-  }
-
+  // AGGREGATION_HOURLY = 1, AGGREGATION_DAILY = 2, AGGREGATION_WEEKLY = 3
   // TODO: Implement actual aggregation logic
   console.warn(
     `Aggregation level ${aggregation} requested (not fully implemented)`,

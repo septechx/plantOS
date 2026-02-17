@@ -59,10 +59,6 @@ function arraysEqual(a: Uint8Array | Buffer, b: Uint8Array | Buffer): boolean {
   return Buffer.from(a).equals(Buffer.from(b));
 }
 
-async function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 describe("Encryption Utilities", () => {
   describe("HKDF-SHA256 Key Derivation", () => {
     it("should derive a 32-byte key from encryption key and session ID", () => {
@@ -309,14 +305,12 @@ describe("Encrypted Protocol Integration", () => {
         broadcastIntervalMs: 60000,
       });
       await server.start();
-      await wait(100);
     }
   });
 
   afterAll(async () => {
     if (server) {
       await server.stop();
-      await wait(100);
     }
   });
 
@@ -755,22 +749,24 @@ describe("Encrypted Protocol Integration", () => {
         port: TEST_PORT,
         url: testUrl,
       });
-      await testClient.connect();
-      await testClient.handshake();
+      try {
+        await testClient.connect();
+        await testClient.handshake();
 
-      const initialCount = testClient.getSessionInfo().sendMessageCount;
+        const initialCount = testClient.getSessionInfo().sendMessageCount;
 
-      testClient.send(
-        MessageType.MSG_LIST_ZONES_REQUEST,
-        ListZonesRequest.create({}),
-        ListZonesRequest,
-      );
-      await testClient.waitForMessage(MessageType.MSG_LIST_ZONES_RESPONSE);
+        testClient.send(
+          MessageType.MSG_LIST_ZONES_REQUEST,
+          ListZonesRequest.create({}),
+          ListZonesRequest,
+        );
+        await testClient.waitForMessage(MessageType.MSG_LIST_ZONES_RESPONSE);
 
-      const afterCount = testClient.getSessionInfo().sendMessageCount;
-      expect(afterCount).toBeGreaterThan(initialCount);
-
-      testClient.close();
+        const afterCount = testClient.getSessionInfo().sendMessageCount;
+        expect(afterCount).toBeGreaterThan(initialCount);
+      } finally {
+        testClient.close();
+      }
     });
 
     it("should generate unique session IDs for different connections", async () => {
@@ -784,17 +780,18 @@ describe("Encrypted Protocol Integration", () => {
         port: TEST_PORT,
         url: testUrl,
       });
+      try {
+        await client1.connect();
+        await client2.connect();
 
-      await client1.connect();
-      await client2.connect();
+        const welcome1 = await client1.handshake();
+        const welcome2 = await client2.handshake();
 
-      const welcome1 = await client1.handshake();
-      const welcome2 = await client2.handshake();
-
-      expect(welcome1.sessionId).not.toEqual(welcome2.sessionId);
-
-      client1.close();
-      client2.close();
+        expect(welcome1.sessionId).not.toEqual(welcome2.sessionId);
+      } finally {
+        client1.close();
+        client2.close();
+      }
     });
 
     it("should use different derived keys for different sessions", async () => {
@@ -808,18 +805,22 @@ describe("Encrypted Protocol Integration", () => {
         port: TEST_PORT,
         url: testUrl,
       });
+      try {
+        await client1.connect();
+        await client2.connect();
 
-      await client1.connect();
-      await client2.connect();
+        await client1.handshake();
+        await client2.handshake();
 
-      await client1.handshake();
-      await client2.handshake();
-
-      expect(client1.getSessionInfo().hasDerivedKey).toBe(true);
-      expect(client2.getSessionInfo().hasDerivedKey).toBe(true);
-
-      client1.close();
-      client2.close();
+        expect(client1.getSessionInfo().hasDerivedKey).toBe(true);
+        expect(client2.getSessionInfo().hasDerivedKey).toBe(true);
+        expect(client1.getSessionInfo().derivedKeyHash).not.toEqual(
+          client2.getSessionInfo().derivedKeyHash,
+        );
+      } finally {
+        client1.close();
+        client2.close();
+      }
     });
   });
 });

@@ -42,6 +42,7 @@ export function registerZoneHandlers(registry: HandlerRegistry): void {
       response.zones = zones;
       return success(response);
     },
+    { responseType: MessageType.MSG_LIST_ZONES_RESPONSE },
   );
 
   // GetZone handler
@@ -69,6 +70,7 @@ export function registerZoneHandlers(registry: HandlerRegistry): void {
       response.zone = zone;
       return success(response);
     },
+    { responseType: MessageType.MSG_GET_ZONE_RESPONSE },
   );
 }
 

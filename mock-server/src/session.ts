@@ -84,22 +84,4 @@ export class SessionManager {
   getSessionCount(): number {
     return this.sessions.size;
   }
-
-  /**
-   * Clean up expired sessions (optional housekeeping).
-   */
-  cleanupExpiredSessions(maxAgeMs: number): number {
-    const now = Date.now();
-    let removed = 0;
-
-    for (const [key, session] of this.sessions) {
-      const age = now - session.lastActivity.getTime();
-      if (age > maxAgeMs) {
-        this.sessions.delete(key);
-        removed++;
-      }
-    }
-
-    return removed;
-  }
 }

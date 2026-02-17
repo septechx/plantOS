@@ -56,10 +56,12 @@ export function registerHandshakeHandlers(
 
       welcome.sessionId = session.id;
 
-      session.isEncrypted = true;
-
       return success(welcome);
     },
-    { requiresEncryption: false, isHandshake: true },
+    {
+      requiresEncryption: false,
+      isHandshake: true,
+      responseType: MessageType.MSG_WELCOME,
+    },
   );
 }

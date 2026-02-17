@@ -15,32 +15,22 @@ interface Client {
 
 export class BroadcastManager {
   private clients: Map<string, Client> = new Map();
-  private sessionManager: SessionManager | null = null;
+  private sessionManager: SessionManager;
 
-  setSessionManager(sessionManager: SessionManager): void {
+  constructor(sessionManager: SessionManager) {
     this.sessionManager = sessionManager;
   }
 
-  /**
-   * Register a new client connection.
-   */
   addClient(session: Session, send: ClientSendFunction): void {
     const sessionKey = session.id.toString("hex");
     this.clients.set(sessionKey, { session, send });
   }
 
-  /**
-   * Remove a client connection.
-   */
   removeClient(session: Session): void {
     const sessionKey = session.id.toString("hex");
     this.clients.delete(sessionKey);
   }
 
-  /**
-   * Broadcast a message to all connected clients.
-   * Optionally exclude a specific session.
-   */
   broadcast(
     messageType: number,
     payload: Uint8Array,
@@ -51,16 +41,13 @@ export class BroadcastManager {
     for (const [key, client] of this.clients) {
       if (key === excludeKey) continue;
 
-      // Only send to clients that have completed handshake
       if (!client.session.isEncrypted) continue;
 
-      if (this.sessionManager) {
-        if (!this.sessionManager.incrementMessageCount(client.session)) {
-          console.error(
-            `Session ${key} message limit exceeded, skipping broadcast`,
-          );
-          continue;
-        }
+      if (!this.sessionManager.incrementMessageCount(client.session)) {
+        console.error(
+          `Session ${key} message limit exceeded, skipping broadcast`,
+        );
+        continue;
       }
 
       try {
@@ -76,9 +63,6 @@ export class BroadcastManager {
     }
   }
 
-  /**
-   * Send a message to a specific client.
-   */
   sendTo(session: Session, messageType: number, payload: Uint8Array): void {
     const sessionKey = session.id.toString("hex");
     const client = this.clients.get(sessionKey);
@@ -92,11 +76,9 @@ export class BroadcastManager {
       let message: Uint8Array;
 
       if (session.isEncrypted) {
-        if (this.sessionManager) {
-          if (!this.sessionManager.incrementMessageCount(session)) {
-            console.error(`Session ${sessionKey} message limit exceeded`);
-            return;
-          }
+        if (!this.sessionManager.incrementMessageCount(session)) {
+          console.error(`Session ${sessionKey} message limit exceeded`);
+          return;
         }
 
         const encrypted = encryptMessage(
@@ -114,16 +96,10 @@ export class BroadcastManager {
     }
   }
 
-  /**
-   * Get the number of connected clients.
-   */
   getClientCount(): number {
     return this.clients.size;
   }
 
-  /**
-   * Get all connected sessions.
-   */
   getAllSessions(): Session[] {
     return Array.from(this.clients.values()).map((c) => c.session);
   }

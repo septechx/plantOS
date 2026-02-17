@@ -49,8 +49,7 @@ export class PlantOSMockServer {
     this.sessionManager = new SessionManager(this.config.encryptionKey);
     this.store = new InMemoryDataStore();
     this.registry = new HandlerRegistry();
-    this.broadcastManager = new BroadcastManager();
-    this.broadcastManager.setSessionManager(this.sessionManager);
+    this.broadcastManager = new BroadcastManager(this.sessionManager);
 
     // Register all handlers
     this.registerHandlers();
@@ -173,8 +172,6 @@ export class PlantOSMockServer {
 
     ws.on("error", (error) => {
       console.error("WebSocket error:", error);
-      this.sessionManager.removeSession(session);
-      this.broadcastManager.removeClient(session);
     });
   }
 

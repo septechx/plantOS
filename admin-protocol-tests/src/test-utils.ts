@@ -96,6 +96,7 @@ export class TestClient {
     });
   }
 
+  // Looks like duplicated code, but it's intentional
   close() {
     this.ws?.close();
     this.messageQueue = [];
@@ -107,17 +108,12 @@ export class TestClient {
   }
 
   private handleClose() {
-    const waiters = this.messageWaiters;
     this.messageQueue = [];
     this.messageWaiters = [];
     this.derivedKey = null;
     this.isEncrypted = false;
     this.sendMessageCount = 0;
     this.recvMessageCount = 0;
-
-    for (const waiter of waiters) {
-      waiter.resolve = () => {};
-    }
   }
 
   send<T>(
@@ -268,12 +264,17 @@ export class TestClient {
     sendMessageCount: number;
     recvMessageCount: number;
     hasDerivedKey: boolean;
+    derivedKeyHash: string | null;
   } {
     return {
       isEncrypted: this.isEncrypted,
       sendMessageCount: this.sendMessageCount,
       recvMessageCount: this.recvMessageCount,
       hasDerivedKey: this.derivedKey !== null,
+      derivedKeyHash:
+        this.derivedKey !== null
+          ? this.derivedKey.subarray(0, 8).toString("hex")
+          : null,
     };
   }
 }

@@ -27,6 +27,7 @@ export function registerModuleHandlers(registry: HandlerRegistry): void {
       response.modules = store.getModules();
       return success(response);
     },
+    { responseType: MessageType.MSG_LIST_MODULES_RESPONSE },
   );
 
   // GetModule handler
@@ -54,5 +55,6 @@ export function registerModuleHandlers(registry: HandlerRegistry): void {
       response.module = module;
       return success(response);
     },
+    { responseType: MessageType.MSG_GET_MODULE_RESPONSE },
   );
 }
