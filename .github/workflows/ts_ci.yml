@@ -1,0 +1,34 @@
+name: TS CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/common-ts-setup
+
+      - name: Run lint
+        run: pnpm lint
+
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/common-ts-setup
+
+      - name: Run tests
+        run: pnpm test
