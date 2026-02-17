@@ -234,6 +234,10 @@ export class TestClient {
   }
 
   async handshake(): Promise<v1.Welcome> {
+    if (this.isEncrypted) {
+      throw new Error("Cannot initiate handshake if already encrypted");
+    }
+
     const hello = v1.Hello.create({
       protocolVersion: "1.0",
       clientVersion: "test-client-1.0",

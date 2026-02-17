@@ -43,14 +43,6 @@ export class SessionManager {
   }
 
   /**
-   * Mark a session as encrypted (after Welcome is sent).
-   */
-  enableEncryption(session: Session): void {
-    session.isEncrypted = true;
-    session.lastActivity = new Date();
-  }
-
-  /**
    * Increment message count for a session.
    * Returns false if session has reached max messages (2^32).
    */
