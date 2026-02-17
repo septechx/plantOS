@@ -13,6 +13,8 @@ jobs:
       contents: read
 
     steps:
+      - uses: actions/checkout@v4
+
       - uses: ./.github/actions/common-ts-setup
 
       - name: Run lint
@@ -24,6 +26,8 @@ jobs:
       contents: read
 
     steps:
+      - uses: actions/checkout@v4
+
       - uses: ./.github/actions/common-ts-setup
 
       - name: Run tests

@@ -16,6 +16,8 @@ jobs:
         working-directory: ./plantos-app
 
     steps:
+      - uses: actions/checkout@v4
+
       - uses: ./.github/actions/android-setup
 
       - name: Build with Gradle
@@ -37,6 +39,8 @@ jobs:
         working-directory: ./plantos-app
 
     steps:
+      - uses: actions/checkout@v4
+
       - uses: ./.github/actions/android-setup
 
       - name: Run unit tests
@@ -61,6 +65,8 @@ jobs:
         working-directory: ./plantos-app
 
     steps:
+      - uses: actions/checkout@v4
+
       - uses: ./.github/actions/android-setup
 
       - name: Run lint
