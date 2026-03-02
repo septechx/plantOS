@@ -1,12 +1,11 @@
 {
-  "name": "plantos-mock-server",
+  "name": "@plantos/mock-server",
   "version": "1.0.0",
   "private": true,
   "description": "Mock PlantOS hub server for development",
+  "main": "src/index.ts",
   "scripts": {
-    "dev": "tsx src/index.ts",
-    "test": "tsx test/integration.ts",
-    "test:load": "tsx test/load.ts",
+    "dev": "tsx src/main.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
