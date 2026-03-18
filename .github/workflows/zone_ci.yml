@@ -15,9 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    defaults:
-      run:
-        working-directory: ./plantos-zone
 
     steps:
       - uses: actions/checkout@v4
@@ -25,10 +22,10 @@ jobs:
       - name: Install ESP toolchain
         run: |
           cargo install espup
-          . ./env.sh
           espup install
 
       - name: Run clippy
+        working-directory: ./plantos-zone
         run: |
           . ./env.sh
           cargo clippy --all-targets --all-features -- -Dwarnings
