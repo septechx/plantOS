@@ -1,0 +1,33 @@
+name: plantos-zone CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "plantos-zone/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "plantos-zone/**"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ./plantos-zone
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ESP toolchain
+        run: |
+          cargo install espup
+          espup install
+
+      - name: Run clippy
+        run: |
+          . env.sh
+          cargo clippy --all-targets --all-features -- -Dwarnings
