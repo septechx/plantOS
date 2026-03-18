@@ -41,21 +41,12 @@ async fn main(spawner: Spawner) -> ! {
 
     info!("Embassy initialized!");
 
-    let (rx, mut tx) = init_uart(peripherals.UART2, peripherals.GPIO18, peripherals.GPIO17);
+    let (rx, _) = init_uart(peripherals.UART2, peripherals.GPIO18, peripherals.GPIO17);
     spawner
         .spawn(uart_listener(rx))
         .expect("Failed to spawn UART listener");
 
     loop {
         Timer::after(Duration::from_secs(1)).await;
-
-        let test = protocol::Message {
-            id: protocol::ZoneID::module(),
-            kind: protocol::MessageKind::Open,
-        };
-        let test = serde_json::to_string(&test).unwrap();
-        let test = test.as_bytes();
-        tx.write_async(test).await.unwrap();
-        tx.flush_async().await.unwrap();
     }
 }
