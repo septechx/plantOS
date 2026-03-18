@@ -8,6 +8,9 @@
 #![deny(clippy::large_stack_frames)]
 
 mod protocol;
+mod uart;
+
+use crate::uart::{init_uart, uart_listener};
 
 use defmt::info;
 use embassy_executor::Spawner;
@@ -28,7 +31,7 @@ esp_bootloader_esp_idf::esp_app_desc!();
     reason = "it's not unusual to allocate larger buffers etc. in main"
 )]
 #[esp_rtos::main]
-async fn main(_spawner: Spawner) -> ! {
+async fn main(spawner: Spawner) -> ! {
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
 
@@ -38,6 +41,11 @@ async fn main(_spawner: Spawner) -> ! {
     esp_rtos::start(timg0.timer0);
 
     info!("Embassy initialized!");
+
+    let (rx, _tx) = init_uart(peripherals.UART2, peripherals.GPIO18, peripherals.GPIO17);
+    spawner
+        .spawn(uart_listener(rx))
+        .expect("Failed to spawn UART listener");
 
     let mut d2 = Output::new(peripherals.GPIO5, Level::High, OutputConfig::default());
 
