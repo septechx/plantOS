@@ -16,7 +16,6 @@ use defmt::info;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_hal::clock::CpuClock;
-use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::timer::timg::TimerGroup;
 use {esp_backtrace as _, esp_println as _};
 
@@ -42,17 +41,21 @@ async fn main(spawner: Spawner) -> ! {
 
     info!("Embassy initialized!");
 
-    let (rx, _tx) = init_uart(peripherals.UART2, peripherals.GPIO18, peripherals.GPIO17);
+    let (rx, mut tx) = init_uart(peripherals.UART2, peripherals.GPIO18, peripherals.GPIO17);
     spawner
         .spawn(uart_listener(rx))
         .expect("Failed to spawn UART listener");
 
-    let mut d2 = Output::new(peripherals.GPIO5, Level::High, OutputConfig::default());
-
     loop {
-        d2.set_high();
         Timer::after(Duration::from_secs(1)).await;
-        d2.set_low();
-        Timer::after(Duration::from_secs(1)).await;
+
+        let test = protocol::Message {
+            id: protocol::ZoneID::module(),
+            kind: protocol::MessageKind::Open,
+        };
+        let test = serde_json::to_string(&test).unwrap();
+        let test = test.as_bytes();
+        tx.write_async(test).await.unwrap();
+        tx.flush_async().await.unwrap();
     }
 }

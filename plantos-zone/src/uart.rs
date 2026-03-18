@@ -2,6 +2,8 @@ use defmt::{error, info};
 use esp_hal::peripherals;
 use esp_hal::uart::{Config, Uart, UartRx, UartTx};
 
+use crate::protocol::Message;
+
 #[embassy_executor::task]
 pub async fn uart_listener(mut rx: UartRx<'static, esp_hal::Async>) {
     // sizeof(Message) = 16b (Extra space for newline/null terminator)
@@ -11,12 +13,23 @@ pub async fn uart_listener(mut rx: UartRx<'static, esp_hal::Async>) {
         match rx.read_async(&mut buf).await {
             Ok(n) if n > 0 => {
                 let rec = &buf[..n];
-                info!("Recieved: {}", rec)
+                decode_message(rec);
             }
             Ok(_) => {}
             Err(e) => {
-                error!("UART Recieve error: {}", e)
+                error!("UART recieve error: {}", e)
             }
+        }
+    }
+}
+
+fn decode_message(msg: &[u8]) {
+    match serde_json::from_slice::<Message>(msg) {
+        Ok(msg) => {
+            info!("{:?}", msg);
+        }
+        Err(_) => {
+            error!("Message decode error");
         }
     }
 }
