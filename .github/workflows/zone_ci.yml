@@ -25,6 +25,7 @@ jobs:
       - name: Install ESP toolchain
         run: |
           cargo install espup
+          . ./env.sh
           espup install
 
       - name: Run clippy
