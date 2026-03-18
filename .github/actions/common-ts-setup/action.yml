@@ -1,0 +1,40 @@
+name: Common TS Setup
+description: Shared setup steps for TS CI jobs
+
+inputs:
+  node-version:
+    description: Node.js version to use
+    required: false
+    default: "20"
+  pnpm-version:
+    description: pnpm version to use
+    required: false
+    default: "10"
+
+runs:
+  using: composite
+  steps:
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: "pnpm"
+
+    - name: Install just
+      run: |
+        curl --proto '=https' --tlsv1.2 -fsSL https://github.com/casey/just/releases/download/1.46.0/just-1.46.0-x86_64-unknown-linux-musl.tar.gz | tar -xz -C . just
+        chmod +x ./just
+      shell: bash
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      shell: bash
+
+    - name: Compile protobuf definitions
+      run: ./just proto-generate-shared
+      shell: bash
