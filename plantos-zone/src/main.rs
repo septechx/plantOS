@@ -7,6 +7,8 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
+mod protocol;
+
 use defmt::info;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};

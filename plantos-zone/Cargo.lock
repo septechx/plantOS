@@ -1106,6 +1106,7 @@ dependencies = [
  "esp-hal",
  "esp-println",
  "esp-rtos",
+ "serde",
  "static_cell",
 ]
 
