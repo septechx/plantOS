@@ -6,3 +6,4 @@ build/
 coverage/
 **/proto-generated/
 *.proto
+**/target/
