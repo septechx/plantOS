@@ -10,11 +10,14 @@
 mod protocol;
 mod uart;
 
+use core::cell::RefCell;
+
 use crate::{
     protocol::ZoneId,
     uart::{init_uart, uart_listener},
 };
 
+use critical_section::Mutex;
 use defmt::info;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
@@ -28,7 +31,7 @@ extern crate alloc;
 // For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
 esp_bootloader_esp_idf::esp_app_desc!();
 
-static mut ZONE_ID: Option<ZoneId> = None;
+static ZONE_ID: Mutex<RefCell<Option<ZoneId>>> = Mutex::new(RefCell::new(None));
 
 #[allow(
     clippy::large_stack_frames,
@@ -58,12 +61,12 @@ async fn main(spawner: Spawner) -> ! {
     }
 }
 
-fn set_zone_id(id: ZoneId) {
-    unsafe {
-        ZONE_ID = Some(id);
-    }
+pub fn set_zone_id(id: ZoneId) {
+    critical_section::with(|cs| {
+        ZONE_ID.borrow_ref_mut(cs).replace(id);
+    });
 }
 
-fn get_zone_id() -> Option<ZoneId> {
-    unsafe { ZONE_ID }
+pub fn get_zone_id() -> Option<ZoneId> {
+    critical_section::with(|cs| *ZONE_ID.borrow_ref(cs))
 }
