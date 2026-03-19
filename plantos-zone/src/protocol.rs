@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct ZoneId(u8);
 
 impl ZoneId {
+    #[allow(dead_code)]
     const MODULE: Self = Self(0);
 
     pub fn zone(id: u8) -> Self {

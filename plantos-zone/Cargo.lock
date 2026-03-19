@@ -1106,6 +1106,7 @@ dependencies = [
  "esp-hal",
  "esp-println",
  "esp-rtos",
+ "heapless 0.8.0",
  "serde",
  "serde_json",
  "static_cell",

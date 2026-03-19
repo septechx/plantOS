@@ -35,6 +35,7 @@ critical-section = "1.2.0"
 static_cell      = "2.1.1"
 serde = { version = "1.0.228", features = ["derive"], default-features = false }
 serde_json = { version = "1.0.149", features = ["alloc"], default-features = false }
+heapless = "0.8"
 
 
 [profile.dev]
