@@ -10,7 +10,10 @@
 mod protocol;
 mod uart;
 
-use crate::uart::{init_uart, uart_listener};
+use crate::{
+    protocol::ZoneId,
+    uart::{init_uart, uart_listener},
+};
 
 use defmt::info;
 use embassy_executor::Spawner;
@@ -24,6 +27,8 @@ extern crate alloc;
 // This creates a default app-descriptor required by the esp-idf bootloader.
 // For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
 esp_bootloader_esp_idf::esp_app_desc!();
+
+static mut ZONE_ID: Option<ZoneId> = None;
 
 #[allow(
     clippy::large_stack_frames,
@@ -41,6 +46,8 @@ async fn main(spawner: Spawner) -> ! {
 
     info!("Embassy initialized!");
 
+    set_zone_id(ZoneId::zone(1));
+
     let (rx, _) = init_uart(peripherals.UART2, peripherals.GPIO18, peripherals.GPIO17);
     spawner
         .spawn(uart_listener(rx))
@@ -49,4 +56,14 @@ async fn main(spawner: Spawner) -> ! {
     loop {
         Timer::after(Duration::from_secs(1)).await;
     }
+}
+
+fn set_zone_id(id: ZoneId) {
+    unsafe {
+        ZONE_ID = Some(id);
+    }
+}
+
+fn get_zone_id() -> Option<ZoneId> {
+    unsafe { ZONE_ID }
 }

@@ -1,4 +1,4 @@
-name: plantos-zone CI
+name: Zone CI
 
 on:
   push:

@@ -2,6 +2,7 @@ use defmt::{error, info};
 use esp_hal::peripherals;
 use esp_hal::uart::{Config, Uart, UartRx, UartTx};
 
+use crate::get_zone_id;
 use crate::protocol::Message;
 
 #[embassy_executor::task]
@@ -17,7 +18,7 @@ pub async fn uart_listener(mut rx: UartRx<'static, esp_hal::Async>) {
             }
             Ok(_) => {}
             Err(e) => {
-                error!("UART recieve error: {}", e)
+                error!("UART receive error: {}", e)
             }
         }
     }
@@ -26,6 +27,10 @@ pub async fn uart_listener(mut rx: UartRx<'static, esp_hal::Async>) {
 fn decode_message(msg: &[u8]) {
     match serde_json::from_slice::<Message>(msg) {
         Ok(msg) => {
+            if Some(msg.id) != get_zone_id() {
+                return;
+            }
+
             info!("{:?}", msg);
         }
         Err(_) => {
