@@ -7,11 +7,21 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
+mod protocol;
+mod uart;
+
+use core::cell::RefCell;
+
+use crate::{
+    protocol::ZoneId,
+    uart::{init_uart, uart_listener},
+};
+
+use critical_section::Mutex;
 use defmt::info;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_hal::clock::CpuClock;
-use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::timer::timg::TimerGroup;
 use {esp_backtrace as _, esp_println as _};
 
@@ -21,12 +31,14 @@ extern crate alloc;
 // For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
 esp_bootloader_esp_idf::esp_app_desc!();
 
+static ZONE_ID: Mutex<RefCell<Option<ZoneId>>> = Mutex::new(RefCell::new(None));
+
 #[allow(
     clippy::large_stack_frames,
     reason = "it's not unusual to allocate larger buffers etc. in main"
 )]
 #[esp_rtos::main]
-async fn main(_spawner: Spawner) -> ! {
+async fn main(spawner: Spawner) -> ! {
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
 
@@ -37,12 +49,24 @@ async fn main(_spawner: Spawner) -> ! {
 
     info!("Embassy initialized!");
 
-    let mut d2 = Output::new(peripherals.GPIO5, Level::High, OutputConfig::default());
+    set_zone_id(ZoneId::zone(1));
+
+    let (rx, _) = init_uart(peripherals.UART2, peripherals.GPIO18, peripherals.GPIO17);
+    spawner
+        .spawn(uart_listener(rx))
+        .expect("Failed to spawn UART listener");
 
     loop {
-        d2.set_high();
-        Timer::after(Duration::from_secs(1)).await;
-        d2.set_low();
         Timer::after(Duration::from_secs(1)).await;
     }
+}
+
+pub fn set_zone_id(id: ZoneId) {
+    critical_section::with(|cs| {
+        ZONE_ID.borrow_ref_mut(cs).replace(id);
+    });
+}
+
+pub fn get_zone_id() -> Option<ZoneId> {
+    critical_section::with(|cs| *ZONE_ID.borrow_ref(cs))
 }

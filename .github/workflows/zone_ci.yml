@@ -1,0 +1,42 @@
+name: Zone CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "plantos-zone/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "plantos-zone/**"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache ESP toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.espup
+            ~/.rustup
+          key: esp-toolchain-${{ runner.os }}-v0.16.0
+          restore-keys: |
+            esp-toolchain-${{ runner.os }}-
+
+      - name: Install ESP toolchain
+        run: |
+          wget -O espup https://github.com/esp-rs/espup/releases/download/v0.16.0/espup-x86_64-unknown-linux-gnu
+          chmod +x ./espup
+          ./espup install
+
+      - name: Run clippy
+        working-directory: ./plantos-zone
+        run: |
+          . ./env.sh
+          cargo clippy -- -Dwarnings
