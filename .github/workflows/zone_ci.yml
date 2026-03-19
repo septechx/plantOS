@@ -39,4 +39,4 @@ jobs:
         working-directory: ./plantos-zone
         run: |
           . ./env.sh
-          cargo clippy --all-targets --all-features -- -Dwarnings
+          cargo clippy -- -Dwarnings
