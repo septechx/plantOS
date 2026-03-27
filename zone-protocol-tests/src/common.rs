@@ -1,4 +1,5 @@
 use std::time::Duration;
+use std::vec::Vec;
 
 use plantos_zone_protocol::Message;
 use serialport::SerialPort;
@@ -38,11 +39,22 @@ impl Test {
 
     pub fn expect_message(&mut self, expected: &Message) -> Message {
         let mut buf = [0u8; 256];
-        let n = self
-            .port
-            .read(&mut buf)
-            .expect("Failed to read from serial");
-        let str = str::from_utf8(&buf[..n]).expect("Invalid UTF-8 received");
+        let mut acc = Vec::new();
+        loop {
+            let n = self
+                .port
+                .read(&mut buf)
+                .expect("Failed to read from serial");
+            if n == 0 {
+                continue;
+            }
+            if let Some(pos) = buf[..n].iter().position(|&b| b == b'\n') {
+                acc.extend_from_slice(&buf[..pos]);
+                break;
+            }
+            acc.extend_from_slice(&buf[..n]);
+        }
+        let str = str::from_utf8(&acc).expect("Invalid UTF-8 received");
         let msg: Message = serde_json::from_str(str).expect("Failed to parse message");
         assert_eq!(
             *expected, msg,
