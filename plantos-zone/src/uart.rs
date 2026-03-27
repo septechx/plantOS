@@ -1,6 +1,6 @@
 use defmt::{error, info};
 use esp_hal::peripherals;
-use esp_hal::uart::{Config, Uart, UartRx, UartTx};
+use esp_hal::uart::{Config, TxError, Uart, UartRx, UartTx};
 use heapless::Vec;
 use plantos_zone_protocol::{Message, MessageKind};
 use static_cell::StaticCell;
@@ -67,7 +67,7 @@ fn decode_message(msg: &[u8], tx: &mut UartTx<'static, esp_hal::Async>) {
                 return;
             }
 
-            info!("Recieved message: `{:?}`", msg);
+            info!("Recieved message: `{}`", msg);
 
             match msg.kind {
                 MessageKind::Open => {
@@ -77,23 +77,32 @@ fn decode_message(msg: &[u8], tx: &mut UartTx<'static, esp_hal::Async>) {
                     // TODO
                 }
                 MessageKind::Ack => {
-                    panic!("Zone cannot receive ACK")
+                    // Should never happen
+                    error!("Ignoring unexpected ACK addressed to this zone");
+                    return;
                 }
             }
 
-            tx.write(
-                serde_json::to_string(&Message::ACK)
-                    .expect("Message::ACK serializes correctly")
-                    .as_bytes(),
-            )
-            .expect("Failed to send ACK");
-            tx.write("\n".as_bytes()).expect("Failed to send ACK");
-            tx.flush().expect("Failed to send ACK");
+            if let Err(e) = send_ack(tx) {
+                error!("Failed to send ACK: {}", e);
+            }
         }
         Err(_) => {
             error!("Message decode error");
         }
     }
+}
+
+fn send_ack(tx: &mut UartTx<'static, esp_hal::Async>) -> Result<(), TxError> {
+    tx.write(
+        serde_json::to_string(&Message::ACK)
+            .expect("Message::ACK serializes correctly")
+            .as_bytes(),
+    )?;
+    tx.write("\n".as_bytes())?;
+    tx.flush()?;
+
+    Ok(())
 }
 
 pub fn init_uart<'a>(
