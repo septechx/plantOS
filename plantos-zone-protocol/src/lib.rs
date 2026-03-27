@@ -1,3 +1,5 @@
+#![no_std]
+
 use defmt::Format;
 use serde::{Deserialize, Serialize};
 
@@ -6,8 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct ZoneId(u8);
 
 impl ZoneId {
-    #[allow(dead_code)]
-    const MODULE: Self = Self(0);
+    pub const MODULE: Self = Self(0);
 
     pub fn zone(id: u8) -> Self {
         if id == 0 {
@@ -23,6 +24,13 @@ impl ZoneId {
 pub struct Message {
     pub id: ZoneId,
     pub kind: MessageKind,
+}
+
+impl Message {
+    pub const ACK: Self = Self {
+        id: ZoneId::MODULE,
+        kind: MessageKind::Ack,
+    };
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Serialize, Deserialize, Format)]

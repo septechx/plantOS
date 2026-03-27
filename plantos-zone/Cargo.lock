@@ -1107,9 +1107,18 @@ dependencies = [
  "esp-println",
  "esp-rtos",
  "heapless 0.8.0",
+ "plantos-zone-protocol",
  "serde",
  "serde_json",
  "static_cell",
+]
+
+[[package]]
+name = "plantos-zone-protocol"
+version = "0.1.0"
+dependencies = [
+ "defmt 1.0.1",
+ "serde",
 ]
 
 [[package]]
