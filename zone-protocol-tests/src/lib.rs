@@ -6,7 +6,7 @@ use plantos_zone_protocol::{Message, MessageKind, ZoneId};
 mod common;
 
 #[test]
-fn recives_open() {
+fn recieves_open() {
     with(|mut t| {
         t.send_message(&Message {
             id: ZoneId::zone(1),
