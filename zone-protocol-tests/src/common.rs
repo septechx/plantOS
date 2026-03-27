@@ -9,10 +9,12 @@ pub struct Test {
 
 impl Test {
     pub fn new() -> Self {
-        let port = serialport::new("/dev/ttyACM1", 115_200)
+        let port_name =
+            std::env::var("PLANTOS_ZONE_SERIAL_PORT").unwrap_or("/dev/ttyACM1".to_string());
+        let port = serialport::new(&port_name, 115_200)
             .timeout(Duration::from_secs(1))
             .open()
-            .expect("Failed to connect to /dev/ttyACM1");
+            .expect("Failed to connect to configured serial port (defaults to /dev/ttyACM1 unless PLANTOS_ZONE_SERIAL_PORT is provided)");
 
         Self { port }
     }
