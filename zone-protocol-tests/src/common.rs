@@ -4,6 +4,8 @@ use std::vec::Vec;
 use plantos_zone_protocol::Message;
 use serialport::SerialPort;
 
+const MAX_FRAME_SIZE: usize = 1024 * 64;
+
 pub struct Test {
     port: Box<dyn SerialPort>,
 }
@@ -49,9 +51,21 @@ impl Test {
                 continue;
             }
             if let Some(pos) = buf[..n].iter().position(|&b| b == b'\n') {
+                assert!(
+                    acc.len() + pos <= MAX_FRAME_SIZE,
+                    "Frame too large: {} bytes (max {})",
+                    acc.len() + pos,
+                    MAX_FRAME_SIZE
+                );
                 acc.extend_from_slice(&buf[..pos]);
                 break;
             }
+            assert!(
+                acc.len() + n <= MAX_FRAME_SIZE,
+                "Frame too large: {} bytes (max {})",
+                acc.len() + n,
+                MAX_FRAME_SIZE
+            );
             acc.extend_from_slice(&buf[..n]);
         }
         let str = str::from_utf8(&acc).expect("Invalid UTF-8 received");
