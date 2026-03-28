@@ -6,7 +6,7 @@ version      = "0.1.0"
 
 [[bin]]
 name = "plantos-zone"
-path = "./src/main.rs"
+path = "src/main.rs"
 
 [dependencies]
 esp-hal = { version = "~1.0", features = ["defmt", "esp32s3", "unstable"] }
@@ -37,6 +37,7 @@ serde = { version = "1.0.228", features = ["derive"], default-features = false }
 serde_json = { version = "1.0.149", features = ["alloc"], default-features = false }
 heapless = "0.8"
 
+plantos-zone-protocol = { path = "../plantos-zone-protocol/" }
 
 [profile.dev]
 # Rust debug is too slow.

@@ -7,15 +7,11 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
-mod protocol;
 mod uart;
 
 use core::cell::RefCell;
 
-use crate::{
-    protocol::ZoneId,
-    uart::{init_uart, uart_listener},
-};
+use crate::uart::{init_uart, uart_listener};
 
 use critical_section::Mutex;
 use defmt::info;
@@ -23,6 +19,7 @@ use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_hal::clock::CpuClock;
 use esp_hal::timer::timg::TimerGroup;
+use plantos_zone_protocol::ZoneId;
 use {esp_backtrace as _, esp_println as _};
 
 extern crate alloc;
@@ -51,9 +48,9 @@ async fn main(spawner: Spawner) -> ! {
 
     set_zone_id(ZoneId::zone(1));
 
-    let (rx, _) = init_uart(peripherals.UART2, peripherals.GPIO18, peripherals.GPIO17);
+    let (rx, tx) = init_uart(peripherals.UART2, peripherals.GPIO18, peripherals.GPIO17);
     spawner
-        .spawn(uart_listener(rx))
+        .spawn(uart_listener(rx, tx))
         .expect("Failed to spawn UART listener");
 
     loop {
