@@ -67,7 +67,7 @@ fn decode_message(msg: &[u8], tx: &mut UartTx<'static, esp_hal::Async>) {
                 return;
             }
 
-            info!("Recieved message: `{}`", msg);
+            info!("Received message: `{}`", msg);
 
             match msg.kind {
                 MessageKind::Open => {
