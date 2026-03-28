@@ -90,8 +90,8 @@ impl Test {
 
             acc.extend_from_slice(&buf[..n]);
         }
-        let str = str::from_utf8(&acc).expect("Invalid UTF-8 received");
-        let msg: Message = serde_json::from_str(str).expect("Failed to parse message");
+        let msg = str::from_utf8(&acc).expect("Invalid UTF-8 received");
+        let msg: Message = serde_json::from_str(msg).expect("Failed to parse message");
         assert_eq!(
             *expected, msg,
             "Message mismatch: expected {:?}, got {:?}",
