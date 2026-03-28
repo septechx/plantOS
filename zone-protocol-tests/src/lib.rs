@@ -1,4 +1,4 @@
-#![allow(unused)]
+#![cfg(test)]
 
 use common::with;
 use plantos_zone_protocol::{Message, MessageKind, ZoneId};
