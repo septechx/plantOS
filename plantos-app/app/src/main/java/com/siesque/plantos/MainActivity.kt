@@ -33,8 +33,11 @@ import com.siesque.plantos.ui.theme.PlantOSTheme
 import com.siesque.plantos.ui.screens.StatisticsScreen
 
 class MainActivity : ComponentActivity() {
+    private lateinit var wsClient: PlantOSWebSocketClient
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        wsClient = PlantOSWebSocketClient()
+        wsClient.connect()
         enableEdgeToEdge()
         setContent {
             PlantOSTheme {
