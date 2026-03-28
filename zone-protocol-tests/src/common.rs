@@ -8,6 +8,7 @@ const MAX_FRAME_SIZE: usize = 1024 * 64;
 
 pub struct Test {
     port: Box<dyn SerialPort>,
+    pending: Vec<u8>,
 }
 
 impl Test {
@@ -19,7 +20,10 @@ impl Test {
             .open()
             .expect("Failed to connect to configured serial port (defaults to /dev/ttyACM1 unless PLANTOS_ZONE_SERIAL_PORT is provided)");
 
-        Self { port }
+        Self {
+            port,
+            pending: Vec::new(),
+        }
     }
 
     pub fn write(&mut self, bytes: &[u8]) {
@@ -41,7 +45,11 @@ impl Test {
 
     pub fn expect_message(&mut self, expected: &Message) -> Message {
         let mut buf = [0u8; 256];
-        let mut acc = Vec::new();
+        let mut acc = if self.pending.is_empty() {
+            Vec::new()
+        } else {
+            std::mem::take(&mut self.pending)
+        };
         loop {
             let n = self
                 .port
@@ -58,6 +66,7 @@ impl Test {
                     MAX_FRAME_SIZE
                 );
                 acc.extend_from_slice(&buf[..pos]);
+                self.pending.extend_from_slice(&buf[pos + 1..n]);
                 break;
             }
             assert!(
