@@ -88,7 +88,11 @@ fn decode_message(msg: &[u8], tx: &mut UartTx<'static, esp_hal::Async>) {
             }
         }
         Err(_) => {
-            error!("Message decode error");
+            if let Ok(msg) = str::from_utf8(msg) {
+                error!("Message decode error, received `{}`", msg);
+            } else {
+                error!("Message decode error, received message is not valid UTF-8");
+            }
         }
     }
 }

@@ -1,0 +1,5 @@
+prepare:
+  . ./env.sh
+
+run: prepare
+  cargo run
