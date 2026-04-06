@@ -9,7 +9,10 @@
 
 mod uart;
 
-use core::cell::RefCell;
+use core::{
+    cell::RefCell,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use crate::uart::{init_uart, uart_listener};
 
@@ -29,6 +32,7 @@ extern crate alloc;
 esp_bootloader_esp_idf::esp_app_desc!();
 
 static ZONE_ID: Mutex<RefCell<Option<ZoneId>>> = Mutex::new(RefCell::new(None));
+static ZONE_STATUS: AtomicBool = AtomicBool::new(false);
 
 #[allow(
     clippy::large_stack_frames,
@@ -66,4 +70,34 @@ pub fn set_zone_id(id: ZoneId) {
 
 pub fn get_zone_id() -> Option<ZoneId> {
     critical_section::with(|cs| *ZONE_ID.borrow_ref(cs))
+}
+
+pub fn set_zone_status(status: ZoneStatus) {
+    ZONE_STATUS.store(status.into(), Ordering::Relaxed);
+}
+
+pub fn get_zone_status() -> ZoneStatus {
+    ZONE_STATUS.load(Ordering::Relaxed).into()
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum ZoneStatus {
+    Open,
+    Closed,
+}
+
+impl From<bool> for ZoneStatus {
+    fn from(open: bool) -> Self {
+        if open {
+            ZoneStatus::Open
+        } else {
+            ZoneStatus::Closed
+        }
+    }
+}
+
+impl From<ZoneStatus> for bool {
+    fn from(status: ZoneStatus) -> Self {
+        status == ZoneStatus::Open
+    }
 }

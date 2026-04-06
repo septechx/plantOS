@@ -5,7 +5,7 @@ use heapless::Vec;
 use plantos_zone_protocol::{Message, MessageKind};
 use static_cell::StaticCell;
 
-use crate::get_zone_id;
+use crate::{ZoneStatus, get_zone_id, get_zone_status, set_zone_status};
 
 const FRAME_DELIMITER: u8 = b'\n';
 const MAX_FRAME_SIZE: usize = 200;
@@ -71,10 +71,16 @@ fn decode_message(msg: &[u8], tx: &mut UartTx<'static, esp_hal::Async>) {
 
             match msg.kind {
                 MessageKind::Open => {
-                    // TODO
+                    if get_zone_status() == ZoneStatus::Open {
+                        error!("Tried to open already open zone");
+                    }
+                    set_zone_status(ZoneStatus::Open);
                 }
                 MessageKind::Close => {
-                    // TODO
+                    if get_zone_status() == ZoneStatus::Closed {
+                        error!("Tried to close already closed zone");
+                    }
+                    set_zone_status(ZoneStatus::Closed);
                 }
                 MessageKind::Ack => {
                     // Should never happen
@@ -114,7 +120,7 @@ pub fn init_uart<'a>(
     rx: peripherals::GPIO18<'a>,
     tx: peripherals::GPIO17<'a>,
 ) -> (UartRx<'a, esp_hal::Async>, UartTx<'a, esp_hal::Async>) {
-    let uart = Uart::new(uart, Config::default())
+    let uart = Uart::new(uart, Config::default().with_baudrate(9600))
         .expect("Failed to init UART")
         .with_rx(rx)
         .with_tx(tx)
