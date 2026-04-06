@@ -22,6 +22,7 @@ pub async fn uart_listener(
     let rx_buf = RX_BUF.init_with(Vec::new);
 
     loop {
+        info!("Waiting for data...");
         match rx.read_async(&mut buf).await {
             Ok(n) if n > 0 => {
                 for &byte in &buf[..n] {
@@ -116,7 +117,7 @@ fn send_ack(tx: &mut UartTx<'static, esp_hal::Async>) -> Result<(), TxError> {
 }
 
 pub fn init_uart<'a>(
-    uart: peripherals::UART2<'a>,
+    uart: peripherals::UART1<'a>,
     rx: peripherals::GPIO18<'a>,
     tx: peripherals::GPIO17<'a>,
 ) -> (UartRx<'a, esp_hal::Async>, UartTx<'a, esp_hal::Async>) {

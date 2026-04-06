@@ -7,6 +7,7 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
+mod output;
 mod uart;
 
 use core::{
@@ -14,7 +15,10 @@ use core::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
-use crate::uart::{init_uart, uart_listener};
+use crate::{
+    output::{init_output, output_manager},
+    uart::{init_uart, uart_listener},
+};
 
 use critical_section::Mutex;
 use defmt::info;
@@ -52,10 +56,15 @@ async fn main(spawner: Spawner) -> ! {
 
     set_zone_id(ZoneId::zone(1));
 
-    let (rx, tx) = init_uart(peripherals.UART2, peripherals.GPIO18, peripherals.GPIO17);
+    let (rx, tx) = init_uart(peripherals.UART1, peripherals.GPIO18, peripherals.GPIO17);
     spawner
         .spawn(uart_listener(rx, tx))
         .expect("Failed to spawn UART listener");
+
+    let output = init_output(peripherals.GPIO5);
+    spawner
+        .spawn(output_manager(output))
+        .expect("Failed to spawn output manager");
 
     loop {
         Timer::after(Duration::from_secs(1)).await;
@@ -80,7 +89,7 @@ pub fn get_zone_status() -> ZoneStatus {
     ZONE_STATUS.load(Ordering::Relaxed).into()
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, defmt::Format)]
 pub enum ZoneStatus {
     Open,
     Closed,
