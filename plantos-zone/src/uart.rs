@@ -96,15 +96,6 @@ fn decode_message(msg: &[u8], tx: &mut UartTx<'static, esp_hal::Async>) {
                 MessageKind::Ack => {
                     error!("Ignoring unexpected ACK addressed to this zone");
                 }
-                MessageKind::Discover => {
-                    info!("Sending Announce to Discover");
-                    if let Err(e) = send_announce(tx) {
-                        error!("Failed to send Announce: {}", e);
-                    }
-                }
-                MessageKind::Announce { .. } => {
-                    error!("Ignoring unexpected Announce addressed to this zone");
-                }
             }
         }
         Err(_) => {
@@ -121,20 +112,6 @@ fn send_ack(tx: &mut UartTx<'static, esp_hal::Async>) -> Result<(), TxError> {
     tx.write(
         serde_json::to_string(&Message::ACK)
             .expect("Message::ACK serializes correctly")
-            .as_bytes(),
-    )?;
-    tx.write("\n".as_bytes())?;
-    tx.flush()?;
-
-    Ok(())
-}
-
-fn send_announce(tx: &mut UartTx<'static, esp_hal::Async>) -> Result<(), TxError> {
-    let zone_id = get_zone_id().expect("Cannot Announce without ZoneId");
-    let announce = Message::to_mod(MessageKind::Announce { id: zone_id });
-    tx.write(
-        serde_json::to_string(&announce)
-            .expect("Announce message serializes correctly")
             .as_bytes(),
     )?;
     tx.write("\n".as_bytes())?;
