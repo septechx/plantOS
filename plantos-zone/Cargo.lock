@@ -1099,6 +1099,7 @@ dependencies = [
  "critical-section",
  "defmt 1.0.1",
  "embassy-executor",
+ "embassy-sync 0.6.2",
  "embassy-time",
  "esp-alloc",
  "esp-backtrace",

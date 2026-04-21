@@ -5,7 +5,7 @@ use heapless::Vec;
 use plantos_zone_protocol::{Message, MessageKind, ZoneId};
 use static_cell::StaticCell;
 
-use crate::{ZoneStatus, get_zone_id, get_zone_status, set_zone_status, ZONE_STATUS_SIGNAL};
+use crate::{ZoneStatus, get_zone_id, get_zone_status, set_zone_status, output::ZONE_STATUS_SIGNAL};
 
 const FRAME_DELIMITER: u8 = b'\n';
 const MAX_FRAME_SIZE: usize = 200;
@@ -95,6 +95,9 @@ fn handle_zone_transition(
     let current_status = get_zone_status();
     if current_status == target_status {
         info!("Zone already {}", target_status);
+        if let Err(e) = send_ack(tx) {
+            error!("Failed to send ACK: {}", e);
+        }
         return;
     }
 

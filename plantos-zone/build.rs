@@ -8,7 +8,7 @@ fn main() {
         Err(std::env::VarError::NotUnicode(_)) => {
             panic!("ZONE_ID must be valid UTF-8");
         }
-        Ok(s) => s.parse().expect("ZONE_ID must be a valid u8 (0-255)"),
+        Ok(s) => s.parse().expect("ZONE_ID must be a valid u8 (1-255)"),
     };
 
     if zone_id == 0 {
@@ -19,7 +19,7 @@ fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-env-changed=ZONE_ID");
 
-    println!("Building zone {}...", zone_id);
+    println!("cargo:warning=Building zone {}...", zone_id);
 }
 
 fn linker_be_nice() {

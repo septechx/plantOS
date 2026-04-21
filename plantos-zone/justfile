@@ -4,6 +4,3 @@ run zone_id="1":
   source ./env.sh
   set +a
   ZONE_ID={{zone_id}} cargo run --release
-
-prepare:
-

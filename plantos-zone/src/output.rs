@@ -1,6 +1,6 @@
 use defmt::info;
 use embassy_sync::signal::Signal;
-use embassy_sync::mutex::CriticalSectionRawMutex;
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::peripherals;
 

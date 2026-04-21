@@ -16,7 +16,7 @@ use core::{
 };
 
 use crate::{
-    output::{init_output, output_manager, ZONE_STATUS_SIGNAL},
+    output::{init_output, output_manager},
     uart::{init_uart, uart_listener},
 };
 
