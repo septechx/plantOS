@@ -1,6 +1,9 @@
-run zone_id="1": prepare
+run zone_id="1":
+  #!/usr/bin/env bash
+  set -a
+  source ./env.sh
+  set +a
   ZONE_ID={{zone_id}} cargo run --release
 
 prepare:
-  . ./env.sh
 

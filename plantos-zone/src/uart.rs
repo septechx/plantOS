@@ -5,7 +5,7 @@ use heapless::Vec;
 use plantos_zone_protocol::{Message, MessageKind, ZoneId};
 use static_cell::StaticCell;
 
-use crate::{ZoneStatus, get_zone_id, get_zone_status, set_zone_status};
+use crate::{ZoneStatus, get_zone_id, get_zone_status, set_zone_status, ZONE_STATUS_SIGNAL};
 
 const FRAME_DELIMITER: u8 = b'\n';
 const MAX_FRAME_SIZE: usize = 200;
@@ -71,28 +71,8 @@ fn decode_message(msg: &[u8], tx: &mut UartTx<'static, esp_hal::Async>) {
             }
 
             match msg.kind {
-                MessageKind::Open => {
-                    if get_zone_status() == ZoneStatus::Open {
-                        error!("Tried to open already open zone");
-                    }
-                    set_zone_status(ZoneStatus::Open);
-
-                    info!("Sending ACK to Open");
-                    if let Err(e) = send_ack(tx) {
-                        error!("Failed to send ACK: {}", e);
-                    }
-                }
-                MessageKind::Close => {
-                    if get_zone_status() == ZoneStatus::Closed {
-                        error!("Tried to close already closed zone");
-                    }
-                    set_zone_status(ZoneStatus::Closed);
-
-                    info!("Sending ACK to Close");
-                    if let Err(e) = send_ack(tx) {
-                        error!("Failed to send ACK: {}", e);
-                    }
-                }
+                MessageKind::Open => handle_zone_transition(tx, ZoneStatus::Open),
+                MessageKind::Close => handle_zone_transition(tx, ZoneStatus::Closed),
                 MessageKind::Ack => {
                     error!("Ignoring unexpected ACK addressed to this zone");
                 }
@@ -105,6 +85,25 @@ fn decode_message(msg: &[u8], tx: &mut UartTx<'static, esp_hal::Async>) {
                 error!("Message decode error, received message is not valid UTF-8");
             }
         }
+    }
+}
+
+fn handle_zone_transition(
+    tx: &mut UartTx<'static, esp_hal::Async>,
+    target_status: ZoneStatus,
+) {
+    let current_status = get_zone_status();
+    if current_status == target_status {
+        info!("Zone already {}", target_status);
+        return;
+    }
+
+    set_zone_status(target_status);
+    ZONE_STATUS_SIGNAL.signal(target_status);
+
+    info!("Transitioning to {}", target_status);
+    if let Err(e) = send_ack(tx) {
+        error!("Failed to send ACK: {}", e);
     }
 }
 

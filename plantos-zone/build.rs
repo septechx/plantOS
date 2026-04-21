@@ -3,10 +3,13 @@ fn main() {
     println!("cargo:rustc-link-arg=-Tdefmt.x");
     println!("cargo:rustc-link-arg=-Tlinkall.x");
 
-    let zone_id: u8 = std::env::var("ZONE_ID")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(1);
+    let zone_id: u8 = match std::env::var("ZONE_ID") {
+        Err(std::env::VarError::NotPresent) => 1,
+        Err(std::env::VarError::NotUnicode(_)) => {
+            panic!("ZONE_ID must be valid UTF-8");
+        }
+        Ok(s) => s.parse().expect("ZONE_ID must be a valid u8 (0-255)"),
+    };
 
     if zone_id == 0 {
         panic!("ZONE_ID must be 1-255");

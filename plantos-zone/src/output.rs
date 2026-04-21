@@ -1,20 +1,17 @@
 use defmt::info;
-use embassy_time::Timer;
+use embassy_sync::signal::Signal;
+use embassy_sync::mutex::CriticalSectionRawMutex;
 use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::peripherals;
 
-use crate::{ZoneStatus, get_zone_status};
+use crate::ZoneStatus;
+
+pub static ZONE_STATUS_SIGNAL: Signal<CriticalSectionRawMutex, ZoneStatus> = Signal::new();
 
 #[embassy_executor::task]
 pub async fn output_manager(mut output: Output<'static>) {
-    let mut prev: Option<ZoneStatus> = None;
     loop {
-        let status = get_zone_status();
-        if Some(status) == prev {
-            Timer::after_millis(50).await;
-            continue;
-        }
-        prev = Some(status);
+        let status = ZONE_STATUS_SIGNAL.wait().await;
 
         info!("Zone status changed to {}", status);
 
@@ -26,9 +23,6 @@ pub async fn output_manager(mut output: Output<'static>) {
     }
 }
 
-pub fn init_output<'a>(output: peripherals::GPIO5<'a>) -> Output<'a>
-where
-    'a: 'static,
-{
+pub fn init_output<'a>(output: peripherals::GPIO5<'a>) -> Output<'a> {
     Output::new(output, Level::Low, OutputConfig::default())
 }
