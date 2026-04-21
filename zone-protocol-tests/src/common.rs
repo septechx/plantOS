@@ -1,7 +1,13 @@
-use std::time::Duration;
+use std::{
+    hint::spin_loop,
+    sync::atomic::{AtomicBool, Ordering},
+    time::Duration,
+};
 
 use plantos_zone_protocol::Message;
 use serialport::SerialPort;
+
+static LOCK: AtomicBool = AtomicBool::new(false);
 
 const MAX_FRAME_SIZE: usize = 1024 * 64;
 const MAX_EMPTY_READS: u32 = 10;
@@ -102,5 +108,20 @@ impl Test {
 }
 
 pub fn with<F: FnOnce(Test)>(callback: F) {
-    callback(Test::new())
+    while LOCK
+        .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+        .is_err()
+    {
+        spin_loop();
+    }
+
+    struct Unlock;
+    impl Drop for Unlock {
+        fn drop(&mut self) {
+            LOCK.store(false, Ordering::Release);
+        }
+    }
+
+    let _unlock = Unlock;
+    callback(Test::new());
 }

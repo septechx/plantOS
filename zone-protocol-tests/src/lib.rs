@@ -16,3 +16,15 @@ fn receives_open() {
         t.expect_message(&Message::ACK);
     });
 }
+
+#[test]
+fn receives_close() {
+    with(|mut t| {
+        t.send_message(&Message {
+            id: ZoneId::zone(1),
+            kind: MessageKind::Close,
+        });
+
+        t.expect_message(&Message::ACK);
+    });
+}

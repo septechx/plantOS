@@ -54,7 +54,9 @@ async fn main(spawner: Spawner) -> ! {
 
     info!("Embassy initialized!");
 
-    set_zone_id(ZoneId::zone(1));
+    let zone_id = env!("ZONE_ID").parse::<u8>().expect("Invalid ZONE_ID");
+    set_zone_id(ZoneId::zone(zone_id));
+    info!("Zone ID set to {}", zone_id);
 
     let (rx, tx) = init_uart(peripherals.UART1, peripherals.GPIO18, peripherals.GPIO17);
     spawner

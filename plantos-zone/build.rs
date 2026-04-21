@@ -1,8 +1,22 @@
 fn main() {
     linker_be_nice();
     println!("cargo:rustc-link-arg=-Tdefmt.x");
-    // make sure linkall.x is the last linker script (otherwise might cause problems with flip-link)
     println!("cargo:rustc-link-arg=-Tlinkall.x");
+
+    let zone_id: u8 = std::env::var("ZONE_ID")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(1);
+
+    if zone_id == 0 {
+        panic!("ZONE_ID must be 1-255");
+    }
+
+    println!("cargo:rustc-env=ZONE_ID={}", zone_id);
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-env-changed=ZONE_ID");
+
+    println!("Building zone {}...", zone_id);
 }
 
 fn linker_be_nice() {

@@ -2,7 +2,7 @@ use defmt::{error, info};
 use esp_hal::peripherals;
 use esp_hal::uart::{Config, TxError, Uart, UartRx, UartTx};
 use heapless::Vec;
-use plantos_zone_protocol::{Message, MessageKind};
+use plantos_zone_protocol::{Message, MessageKind, ZoneId};
 use static_cell::StaticCell;
 
 use crate::{ZoneStatus, get_zone_id, get_zone_status, set_zone_status};
@@ -64,11 +64,11 @@ pub async fn uart_listener(
 fn decode_message(msg: &[u8], tx: &mut UartTx<'static, esp_hal::Async>) {
     match serde_json::from_slice::<Message>(msg) {
         Ok(msg) => {
-            if Some(msg.id) != get_zone_id() {
+            info!("Received message: `{}`", msg);
+
+            if Some(msg.id) != get_zone_id() && msg.id != ZoneId::MODULE {
                 return;
             }
-
-            info!("Received message: `{}`", msg);
 
             match msg.kind {
                 MessageKind::Open => {
@@ -76,22 +76,35 @@ fn decode_message(msg: &[u8], tx: &mut UartTx<'static, esp_hal::Async>) {
                         error!("Tried to open already open zone");
                     }
                     set_zone_status(ZoneStatus::Open);
+
+                    info!("Sending ACK to Open");
+                    if let Err(e) = send_ack(tx) {
+                        error!("Failed to send ACK: {}", e);
+                    }
                 }
                 MessageKind::Close => {
                     if get_zone_status() == ZoneStatus::Closed {
                         error!("Tried to close already closed zone");
                     }
                     set_zone_status(ZoneStatus::Closed);
+
+                    info!("Sending ACK to Close");
+                    if let Err(e) = send_ack(tx) {
+                        error!("Failed to send ACK: {}", e);
+                    }
                 }
                 MessageKind::Ack => {
-                    // Should never happen
                     error!("Ignoring unexpected ACK addressed to this zone");
-                    return;
                 }
-            }
-
-            if let Err(e) = send_ack(tx) {
-                error!("Failed to send ACK: {}", e);
+                MessageKind::Discover => {
+                    info!("Sending Announce to Discover");
+                    if let Err(e) = send_announce(tx) {
+                        error!("Failed to send Announce: {}", e);
+                    }
+                }
+                MessageKind::Announce { .. } => {
+                    error!("Ignoring unexpected Announce addressed to this zone");
+                }
             }
         }
         Err(_) => {
@@ -108,6 +121,20 @@ fn send_ack(tx: &mut UartTx<'static, esp_hal::Async>) -> Result<(), TxError> {
     tx.write(
         serde_json::to_string(&Message::ACK)
             .expect("Message::ACK serializes correctly")
+            .as_bytes(),
+    )?;
+    tx.write("\n".as_bytes())?;
+    tx.flush()?;
+
+    Ok(())
+}
+
+fn send_announce(tx: &mut UartTx<'static, esp_hal::Async>) -> Result<(), TxError> {
+    let zone_id = get_zone_id().expect("Cannot Announce without ZoneId");
+    let announce = Message::to_mod(MessageKind::Announce { id: zone_id });
+    tx.write(
+        serde_json::to_string(&announce)
+            .expect("Announce message serializes correctly")
             .as_bytes(),
     )?;
     tx.write("\n".as_bytes())?;

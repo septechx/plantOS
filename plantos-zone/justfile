@@ -1,5 +1,6 @@
+run zone_id="1": prepare
+  ZONE_ID={{zone_id}} cargo run --release
+
 prepare:
   . ./env.sh
 
-run: prepare
-  cargo run
