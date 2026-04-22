@@ -32,7 +32,7 @@ esp-backtrace = { version = "0.18.1", features = [
 esp-println = { version = "0.16.1", features = ["defmt-espflash", "esp32s3"] }
 
 critical-section = "1.2.0"
-embassy-sync = "0.6"
+embassy-sync = "0.8.0"
 static_cell      = "2.1.1"
 serde = { version = "1.0.228", features = ["derive"], default-features = false }
 serde_json = { version = "1.0.149", features = ["alloc"], default-features = false }
@@ -42,7 +42,8 @@ embedded-hal-bus = "0.3"
 heapless = "0.8"
 
 plantos-zone-protocol = { path = "../plantos-zone-protocol/" }
-sx1262 = { version = "0.3.0", features = ["defmt"] }
+lora-phy = "3.0.1"
+embassy-embedded-hal = { version = "0.6.0", features = ["defmt"] }
 
 
 [profile.dev]

@@ -272,8 +272,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "554e3e840696f54b4c9afcf28a0f24da431c927f4151040020416e7393d6d0d8"
 dependencies = [
  "embassy-futures",
- "embassy-hal-internal",
+ "embassy-hal-internal 0.3.0",
  "embassy-sync 0.7.2",
+ "embedded-hal 0.2.7",
+ "embedded-hal 1.0.0",
+ "embedded-hal-async",
+ "embedded-storage",
+ "embedded-storage-async",
+ "nb 1.1.0",
+]
+
+[[package]]
+name = "embassy-embedded-hal"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0641612053b2f34fc250bb63f6630ae75de46e02ade7f457268447081d709ce"
+dependencies = [
+ "defmt 1.0.1",
+ "embassy-futures",
+ "embassy-hal-internal 0.4.0",
+ "embassy-sync 0.8.0",
  "embedded-hal 0.2.7",
  "embedded-hal 1.0.0",
  "embedded-hal-async",
@@ -327,6 +345,15 @@ name = "embassy-hal-internal"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95285007a91b619dc9f26ea8f55452aa6c60f7115a4edc05085cd2bd3127cd7a"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
+name = "embassy-hal-internal"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f10ce10a4dfdf6402d8e9bd63128986b96a736b1a0a6680547ed2ac55d55dba"
 dependencies = [
  "num-traits",
 ]
@@ -636,7 +663,7 @@ dependencies = [
  "delegate",
  "digest",
  "document-features",
- "embassy-embedded-hal",
+ "embassy-embedded-hal 0.5.0",
  "embassy-futures",
  "embassy-sync 0.7.2",
  "embassy-usb-driver",
@@ -1082,6 +1109,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
+name = "lora-modulation"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c96c4a41a1f1ad04de765306e1829c7007a37898fe4033204fa82cf2e055624"
+
+[[package]]
+name = "lora-phy"
+version = "3.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "61471c3b2909789e3332083577f6cf6c41a4fcf37674ef15156bcbb20504ac65"
+dependencies = [
+ "defmt 0.3.100",
+ "embedded-hal 1.0.0",
+ "embedded-hal-async",
+ "lora-modulation",
+ "num-traits",
+]
+
+[[package]]
 name = "memchr"
 version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1138,8 +1184,9 @@ version = "0.1.0"
 dependencies = [
  "critical-section",
  "defmt 1.0.1",
+ "embassy-embedded-hal 0.6.0",
  "embassy-executor",
- "embassy-sync 0.6.2",
+ "embassy-sync 0.8.0",
  "embassy-time",
  "embedded-hal 1.0.0",
  "embedded-hal-async",
@@ -1151,11 +1198,11 @@ dependencies = [
  "esp-println",
  "esp-rtos",
  "heapless 0.8.0",
+ "lora-phy",
  "plantos-zone-protocol",
  "serde",
  "serde_json",
  "static_cell",
- "sx1262",
 ]
 
 [[package]]
@@ -1247,28 +1294,6 @@ name = "rand_core"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "76afc826de14238e6e8c374ddcc1fa19e374fd8dd986b0d2af0d02377261d83c"
-
-[[package]]
-name = "regiface"
-version = "0.2.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68cb3999c0f452b340f94d960205a0c499b89ddb6d8c8247a95c788fc7378e4e"
-dependencies = [
- "embedded-hal 1.0.0",
- "embedded-hal-async",
- "regiface-macros",
-]
-
-[[package]]
-name = "regiface-macros"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e24cb5b14e574b1f2ab517062181b2ff287c93a56366a87c5f41b99e88aaaa04"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.117",
-]
 
 [[package]]
 name = "riscv"
@@ -1485,19 +1510,6 @@ dependencies = [
  "quote",
  "syn 1.0.109",
  "unicode-width",
-]
-
-[[package]]
-name = "sx1262"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4d6ea9084fe378284c31acaf401ce97e652e18674af93b17b460a50d4afce46"
-dependencies = [
- "bitflags 2.11.1",
- "defmt 1.0.1",
- "embedded-hal 1.0.0",
- "embedded-hal-async",
- "regiface",
 ]
 
 [[package]]

@@ -13,8 +13,8 @@ mod uart;
 use defmt::info;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
+use esp_hal::clock::CpuClock;
 use esp_hal::timer::timg::TimerGroup;
-use esp_hal::{clock::CpuClock, peripherals};
 use plantos_zone_protocol::ZoneId;
 use {esp_backtrace as _, esp_println as _};
 
@@ -48,7 +48,7 @@ async fn main(spawner: Spawner) -> ! {
         .spawn(uart::uart_sender(tx, rx, zone_id))
         .expect("Failed to spawn UART sender");
 
-    let _ = lora::init_lora(
+    let lora = lora::init_lora(
         peripherals.SPI2,
         peripherals.GPIO8,
         peripherals.GPIO9,
@@ -59,6 +59,9 @@ async fn main(spawner: Spawner) -> ! {
         peripherals.GPIO14,
     )
     .await;
+    spawner
+        .spawn(lora::lora_listener(lora))
+        .expect("Failed to spawn LoRa listener");
 
     loop {
         uart::signal_open();
