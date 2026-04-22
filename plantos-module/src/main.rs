@@ -51,10 +51,8 @@ async fn main(spawner: Spawner) -> ! {
 
     loop {
         uart::signal_open();
-
         Timer::after(Duration::from_secs(5)).await;
         uart::signal_close();
-
         Timer::after(Duration::from_secs(5)).await;
     }
 }

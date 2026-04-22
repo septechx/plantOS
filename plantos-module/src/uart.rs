@@ -1,6 +1,6 @@
-use core::sync::atomic::{AtomicBool, Ordering};
-
 use defmt::{Format, error, info};
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use embassy_sync::channel::Channel;
 use embassy_time::{Duration, Timer};
 use esp_hal::peripherals;
 use esp_hal::uart::{Config, Uart, UartRx, UartTx};
@@ -9,8 +9,13 @@ use plantos_zone_protocol::{Message, MessageKind, ZoneId};
 const MAX_RETRIES: u8 = 10;
 const ACK_TIMEOUT_MS: u64 = 1000;
 
-static OPEN_REQUESTED: AtomicBool = AtomicBool::new(false);
-static CLOSE_REQUESTED: AtomicBool = AtomicBool::new(false);
+#[derive(Debug, Clone, Copy)]
+pub enum ZoneCommand {
+    Open,
+    Close,
+}
+
+static COMMAND_CHANNEL: Channel<CriticalSectionRawMutex, ZoneCommand, 8> = Channel::new();
 
 #[allow(clippy::large_stack_frames)]
 #[embassy_executor::task]
@@ -22,34 +27,29 @@ pub async fn uart_sender(
     let mut buf = [0u8; 32];
 
     loop {
-        while !OPEN_REQUESTED.load(Ordering::Relaxed) {
-            Timer::after(Duration::from_millis(100)).await;
-        }
-        OPEN_REQUESTED.store(false, Ordering::Relaxed);
-
-        info!("Sending Open to zone {}", zone_id);
-        if send_with_retry(&mut tx, &mut rx, zone_id, MessageKind::Open, &mut buf)
-            .await
-            .is_ok()
-        {
-            info!("Zone {} opened", zone_id);
-        } else {
-            error!("Failed to open zone {} after retries", zone_id);
-        }
-
-        while !CLOSE_REQUESTED.load(Ordering::Relaxed) {
-            Timer::after(Duration::from_millis(100)).await;
-        }
-        CLOSE_REQUESTED.store(false, Ordering::Relaxed);
-
-        info!("Sending Close to zone {}", zone_id);
-        if send_with_retry(&mut tx, &mut rx, zone_id, MessageKind::Close, &mut buf)
-            .await
-            .is_ok()
-        {
-            info!("Zone {} closed", zone_id);
-        } else {
-            error!("Failed to close zone {} after retries", zone_id);
+        match COMMAND_CHANNEL.receive().await {
+            ZoneCommand::Open => {
+                info!("Sending Open to zone {}", zone_id);
+                if send_with_retry(&mut tx, &mut rx, zone_id, MessageKind::Open, &mut buf)
+                    .await
+                    .is_ok()
+                {
+                    info!("Zone {} opened", zone_id);
+                } else {
+                    error!("Failed to open zone {} after retries", zone_id);
+                }
+            }
+            ZoneCommand::Close => {
+                info!("Sending Close to zone {}", zone_id);
+                if send_with_retry(&mut tx, &mut rx, zone_id, MessageKind::Close, &mut buf)
+                    .await
+                    .is_ok()
+                {
+                    info!("Zone {} closed", zone_id);
+                } else {
+                    error!("Failed to close zone {} after retries", zone_id);
+                }
+            }
         }
     }
 }
@@ -148,10 +148,9 @@ pub fn init_uart<'a>(
 }
 
 pub fn signal_open() {
-    OPEN_REQUESTED.store(true, Ordering::Relaxed);
+    COMMAND_CHANNEL.try_send(ZoneCommand::Open).ok();
 }
 
 pub fn signal_close() {
-    CLOSE_REQUESTED.store(true, Ordering::Relaxed);
+    COMMAND_CHANNEL.try_send(ZoneCommand::Close).ok();
 }
-
