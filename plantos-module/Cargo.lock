@@ -465,6 +465,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "embedded-hal-bus"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "513e0b3a8fb7d3013a8ae17a834283f170deaf7d0eeab0a7c1a36ad4dd356d22"
+dependencies = [
+ "critical-section",
+ "embedded-hal 1.0.0",
+]
+
+[[package]]
 name = "embedded-io"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1131,6 +1141,9 @@ dependencies = [
  "embassy-executor",
  "embassy-sync 0.6.2",
  "embassy-time",
+ "embedded-hal 1.0.0",
+ "embedded-hal-async",
+ "embedded-hal-bus",
  "esp-alloc",
  "esp-backtrace",
  "esp-bootloader-esp-idf",
@@ -1142,6 +1155,7 @@ dependencies = [
  "serde",
  "serde_json",
  "static_cell",
+ "sx1262",
 ]
 
 [[package]]
@@ -1233,6 +1247,28 @@ name = "rand_core"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "76afc826de14238e6e8c374ddcc1fa19e374fd8dd986b0d2af0d02377261d83c"
+
+[[package]]
+name = "regiface"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68cb3999c0f452b340f94d960205a0c499b89ddb6d8c8247a95c788fc7378e4e"
+dependencies = [
+ "embedded-hal 1.0.0",
+ "embedded-hal-async",
+ "regiface-macros",
+]
+
+[[package]]
+name = "regiface-macros"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e24cb5b14e574b1f2ab517062181b2ff287c93a56366a87c5f41b99e88aaaa04"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
 
 [[package]]
 name = "riscv"
@@ -1449,6 +1485,19 @@ dependencies = [
  "quote",
  "syn 1.0.109",
  "unicode-width",
+]
+
+[[package]]
+name = "sx1262"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4d6ea9084fe378284c31acaf401ce97e652e18674af93b17b460a50d4afce46"
+dependencies = [
+ "bitflags 2.11.1",
+ "defmt 1.0.1",
+ "embedded-hal 1.0.0",
+ "embedded-hal-async",
+ "regiface",
 ]
 
 [[package]]

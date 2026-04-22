@@ -7,13 +7,14 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
+mod lora;
 mod uart;
 
 use defmt::info;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
-use esp_hal::clock::CpuClock;
 use esp_hal::timer::timg::TimerGroup;
+use esp_hal::{clock::CpuClock, peripherals};
 use plantos_zone_protocol::ZoneId;
 use {esp_backtrace as _, esp_println as _};
 
@@ -47,7 +48,17 @@ async fn main(spawner: Spawner) -> ! {
         .spawn(uart::uart_sender(tx, rx, zone_id))
         .expect("Failed to spawn UART sender");
 
-    uart::signal_open();
+    let _ = lora::init_lora(
+        peripherals.SPI2,
+        peripherals.GPIO8,
+        peripherals.GPIO9,
+        peripherals.GPIO10,
+        peripherals.GPIO11,
+        peripherals.GPIO12,
+        peripherals.GPIO13,
+        peripherals.GPIO14,
+    )
+    .await;
 
     loop {
         uart::signal_open();

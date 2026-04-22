@@ -36,9 +36,13 @@ embassy-sync = "0.6"
 static_cell      = "2.1.1"
 serde = { version = "1.0.228", features = ["derive"], default-features = false }
 serde_json = { version = "1.0.149", features = ["alloc"], default-features = false }
+embedded-hal = "1.0"
+embedded-hal-async = "1.0"
+embedded-hal-bus = "0.3"
 heapless = "0.8"
 
 plantos-zone-protocol = { path = "../plantos-zone-protocol/" }
+sx1262 = { version = "0.3.0", features = ["defmt"] }
 
 
 [profile.dev]
