@@ -3,16 +3,16 @@
 #![deny(
     clippy::mem_forget,
     reason = "mem::forget is generally not safe to do with esp_hal types, especially those \
-    holding buffers for the duration of a data transfer."
+        holding buffers for the duration of a data transfer."
 )]
 #![deny(clippy::large_stack_frames)]
 
+mod output;
 mod uart;
 
 use core::cell::RefCell;
 
-use crate::uart::{init_uart, uart_listener};
-
+use crate::{output::init_output, uart::init_uart};
 use critical_section::Mutex;
 use defmt::info;
 use embassy_executor::Spawner;
@@ -20,15 +20,38 @@ use embassy_time::{Duration, Timer};
 use esp_hal::clock::CpuClock;
 use esp_hal::timer::timg::TimerGroup;
 use plantos_zone_protocol::ZoneId;
+use static_cell::StaticCell;
 use {esp_backtrace as _, esp_println as _};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, defmt::Format)]
+pub enum ZoneStatus {
+    Open,
+    Closed,
+}
+
+impl From<bool> for ZoneStatus {
+    fn from(open: bool) -> Self {
+        if open {
+            ZoneStatus::Open
+        } else {
+            ZoneStatus::Closed
+        }
+    }
+}
+
+impl From<ZoneStatus> for bool {
+    fn from(status: ZoneStatus) -> Self {
+        status == ZoneStatus::Open
+    }
+}
 
 extern crate alloc;
 
-// This creates a default app-descriptor required by the esp-idf bootloader.
-// For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
+include!(concat!(env!("OUT_DIR"), "/generated_zone_id.rs"));
+
 esp_bootloader_esp_idf::esp_app_desc!();
 
-static ZONE_ID: Mutex<RefCell<Option<ZoneId>>> = Mutex::new(RefCell::new(None));
+static ZONE_ID: StaticCell<Mutex<RefCell<Option<ZoneId>>>> = StaticCell::new();
 
 #[allow(
     clippy::large_stack_frames,
@@ -46,24 +69,25 @@ async fn main(spawner: Spawner) -> ! {
 
     info!("Embassy initialized!");
 
-    set_zone_id(ZoneId::zone(1));
+    let zone_id_mutex = ZONE_ID.init_with(|| Mutex::new(RefCell::new(None)));
+    critical_section::with(|cs| {
+        zone_id_mutex
+            .borrow_ref_mut(cs)
+            .replace(ZoneId::zone(ZONE_ID_U8));
+    });
+    info!("Zone ID set to {}", ZONE_ID_U8);
 
-    let (rx, tx) = init_uart(peripherals.UART2, peripherals.GPIO18, peripherals.GPIO17);
+    let (rx, tx) = init_uart(peripherals.UART1, peripherals.GPIO18, peripherals.GPIO17);
     spawner
-        .spawn(uart_listener(rx, tx))
+        .spawn(uart::uart_listener(rx, tx, zone_id_mutex))
         .expect("Failed to spawn UART listener");
+
+    let output = init_output(peripherals.GPIO5);
+    spawner
+        .spawn(output::output_manager(output))
+        .expect("Failed to spawn output manager");
 
     loop {
         Timer::after(Duration::from_secs(1)).await;
     }
-}
-
-pub fn set_zone_id(id: ZoneId) {
-    critical_section::with(|cs| {
-        ZONE_ID.borrow_ref_mut(cs).replace(id);
-    });
-}
-
-pub fn get_zone_id() -> Option<ZoneId> {
-    critical_section::with(|cs| *ZONE_ID.borrow_ref(cs))
 }

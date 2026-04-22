@@ -1,7 +1,13 @@
-use std::time::Duration;
+use std::{
+    hint::spin_loop,
+    sync::atomic::{AtomicBool, Ordering},
+    time::Duration,
+};
 
-use plantos_zone_protocol::Message;
+use plantos_zone_protocol::{Message, MessageKind, ZoneId};
 use serialport::SerialPort;
+
+static LOCK: AtomicBool = AtomicBool::new(false);
 
 const MAX_FRAME_SIZE: usize = 1024 * 64;
 const MAX_EMPTY_READS: u32 = 10;
@@ -9,35 +15,41 @@ const MAX_EMPTY_READS: u32 = 10;
 pub struct Test {
     port: Box<dyn SerialPort>,
     pending: Vec<u8>,
+    zone: ZoneId,
 }
 
 impl Test {
-    pub fn new() -> Self {
+    pub fn new(zone: ZoneId) -> Self {
         let port_name =
             std::env::var("PLANTOS_ZONE_SERIAL_PORT").unwrap_or("/dev/ttyACM1".to_string());
-        let port = serialport::new(&port_name, 115_200)
+        let port = serialport::new(&port_name, 9600)
             .timeout(Duration::from_secs(1))
             .open()
             .expect("Failed to connect to configured serial port (defaults to /dev/ttyACM1 unless PLANTOS_ZONE_SERIAL_PORT is provided)");
 
         Self {
             port,
+            zone,
             pending: Vec::new(),
         }
     }
 
-    pub fn write(&mut self, bytes: &[u8]) {
+    fn write(&mut self, bytes: &[u8]) {
         self.port
             .write_all(bytes)
             .expect("Failed to write to serial");
     }
 
-    pub fn flush(&mut self) {
+    fn flush(&mut self) {
         self.port.flush().expect("Failed to flush serial");
     }
 
-    pub fn send_message(&mut self, msg: &Message) {
-        let msg = serde_json::to_string(msg).expect("Failed to serialize message");
+    pub fn send_message(&mut self, kind: MessageKind) {
+        let msg = Message {
+            id: self.zone,
+            kind,
+        };
+        let msg = serde_json::to_string(&msg).expect("Failed to serialize message");
         self.write(msg.as_bytes());
         self.write("\n".as_bytes());
         self.flush();
@@ -101,6 +113,21 @@ impl Test {
     }
 }
 
-pub fn with<F: FnOnce(Test)>(callback: F) {
-    callback(Test::new())
+pub fn with<F: FnOnce(Test)>(zone: ZoneId, callback: F) {
+    while LOCK
+        .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+        .is_err()
+    {
+        spin_loop();
+    }
+
+    struct Unlock;
+    impl Drop for Unlock {
+        fn drop(&mut self) {
+            LOCK.store(false, Ordering::Release);
+        }
+    }
+
+    let _unlock = Unlock;
+    callback(Test::new(zone));
 }
