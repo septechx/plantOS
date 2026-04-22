@@ -1,0 +1,47 @@
+body {
+  font-family: Arial;
+  background: #eaf7ea;
+  text-align: center;
+  margin: 0;
+}
+
+h1 {
+  font-size: 4rem;
+  color: #2e7d32;
+}
+
+#weather {
+  background: white;
+  margin: 20px auto;
+  padding: 15px;
+  width: 80%;
+  border-radius: 10px;
+}
+
+.zone {
+  background: white;
+  margin: 10px auto;
+  padding: 15px;
+  width: 80%;
+  border-radius: 10px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+}
+
+input.area {
+  width: 70px;
+}

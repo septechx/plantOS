@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>PlantOS</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>PlantOS</h1>
+
+<div id="weather">
+  <h2>Precipitaciones hoy</h2>
+  <p id="rain">Cargando...</p>
+</div>
+
+<div id="zones">
+
+  <h2>Zonas del huerto</h2>
+
+  <!-- ZONA 1 -->
+  <div class="zone">
+    <p>Zona 1</p>
+
+    <div class="info">
+      <span>Último riego: <strong class="last-water">--:--</strong></span>
+      <span>Litros regados: <strong class="liters">0L</strong></span>
+      <span>Agua lluvia: <strong class="rain-water">0L</strong></span>
+      <span>Agua total: <strong class="total-water">0L</strong></span>
+      <span>Necesario: <strong class="needed">0L</strong></span>
+      <span>Diferencia: <strong class="diff">0L</strong></span>
+      <span>Litros/m²: <strong class="liters-m2">0</strong></span>
+    </div>
+
+    <div class="controls">
+      <input type="number" class="area" placeholder="m²" min="1">
+
+      <select class="level">
+        <option value="1">Bajo</option>
+        <option value="2">Medio</option>
+        <option value="3">Alto</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ZONA 2 -->
+  <div class="zone">
+    <p>Zona 2</p>
+
+    <div class="info">
+      <span>Último riego: <strong class="last-water">--:--</strong></span>
+      <span>Litros regados: <strong class="liters">0L</strong></span>
+      <span>Agua lluvia: <strong class="rain-water">0L</strong></span>
+      <span>Agua total: <strong class="total-water">0L</strong></span>
+      <span>Necesario: <strong class="needed">0L</strong></span>
+      <span>Diferencia: <strong class="diff">0L</strong></span>
+      <span>Litros/m²: <strong class="liters-m2">0</strong></span>
+    </div>
+
+    <div class="controls">
+      <input type="number" class="area" placeholder="m²" min="1">
+
+      <select class="level">
+        <option value="1">Bajo</option>
+        <option value="2">Medio</option>
+        <option value="3">Alto</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ZONA 3 -->
+  <div class="zone">
+    <p>Zona 3</p>
+
+    <div class="info">
+      <span>Último riego: <strong class="last-water">--:--</strong></span>
+      <span>Litros regados: <strong class="liters">0L</strong></span>
+      <span>Agua lluvia: <strong class="rain-water">0L</strong></span>
+      <span>Agua total: <strong class="total-water">0L</strong></span>
+      <span>Necesario: <strong class="needed">0L</strong></span>
+      <span>Diferencia: <strong class="diff">0L</strong></span>
+      <span>Litros/m²: <strong class="liters-m2">0</strong></span>
+    </div>
+
+    <div class="controls">
+      <input type="number" class="area" placeholder="m²" min="1">
+
+      <select class="level">
+        <option value="1">Bajo</option>
+        <option value="2">Medio</option>
+        <option value="3">Alto</option>
+      </select>
+    </div>
+  </div>
+
+</div>
+
+<script src="index.js"></script>
+</body>
+</html>
