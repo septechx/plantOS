@@ -1,3 +1,6 @@
+use core::cell::RefCell;
+use core::str::from_utf8 as str_from_utf8;
+
 use defmt::{error, info};
 use esp_hal::peripherals;
 use esp_hal::uart::{Config, TxError, Uart, UartRx, UartTx};
@@ -5,7 +8,8 @@ use heapless::Vec;
 use plantos_zone_protocol::{Message, MessageKind, ZoneId};
 use static_cell::StaticCell;
 
-use crate::{ZoneStatus, get_zone_id, get_zone_status, set_zone_status, output::ZONE_STATUS_SIGNAL};
+use crate::ZoneStatus;
+use crate::output::ZONE_STATUS_SIGNAL;
 
 const FRAME_DELIMITER: u8 = b'\n';
 const MAX_FRAME_SIZE: usize = 200;
@@ -16,10 +20,12 @@ const RX_BUFFER_CAPACITY: usize = 200;
 pub async fn uart_listener(
     mut rx: UartRx<'static, esp_hal::Async>,
     mut tx: UartTx<'static, esp_hal::Async>,
+    zone_id_mutex: &'static critical_section::Mutex<RefCell<Option<ZoneId>>>,
 ) {
     let mut buf = [0u8; 32];
     static RX_BUF: StaticCell<Vec<u8, RX_BUFFER_CAPACITY>> = StaticCell::new();
     let rx_buf = RX_BUF.init_with(Vec::new);
+    let mut last_known_status: Option<ZoneStatus> = None;
 
     loop {
         info!("Waiting for data...");
@@ -49,7 +55,7 @@ pub async fn uart_listener(
                     rx_buf.truncate(remaining_len);
 
                     if !frame.is_empty() {
-                        decode_message(&frame, &mut tx);
+                        decode_message(&frame, &mut tx, zone_id_mutex, &mut last_known_status);
                     }
                 }
             }
@@ -61,25 +67,35 @@ pub async fn uart_listener(
     }
 }
 
-fn decode_message(msg: &[u8], tx: &mut UartTx<'static, esp_hal::Async>) {
+fn decode_message(
+    msg: &[u8],
+    tx: &mut UartTx<'static, esp_hal::Async>,
+    zone_id_mutex: &'static critical_section::Mutex<RefCell<Option<ZoneId>>>,
+    last_known_status: &mut Option<ZoneStatus>,
+) {
     match serde_json::from_slice::<Message>(msg) {
         Ok(msg) => {
             info!("Received message: `{}`", msg);
 
-            if Some(msg.id) != get_zone_id() && msg.id != ZoneId::MODULE {
+            let current_zone_id = critical_section::with(|cs| zone_id_mutex.borrow_ref(cs).clone());
+            if current_zone_id != Some(msg.id) && msg.id != ZoneId::MODULE {
                 return;
             }
 
             match msg.kind {
-                MessageKind::Open => handle_zone_transition(tx, ZoneStatus::Open),
-                MessageKind::Close => handle_zone_transition(tx, ZoneStatus::Closed),
+                MessageKind::Open => {
+                    handle_zone_transition(tx, ZoneStatus::Open, last_known_status)
+                }
+                MessageKind::Close => {
+                    handle_zone_transition(tx, ZoneStatus::Closed, last_known_status)
+                }
                 MessageKind::Ack => {
                     error!("Ignoring unexpected ACK addressed to this zone");
                 }
             }
         }
         Err(_) => {
-            if let Ok(msg) = str::from_utf8(msg) {
+            if let Ok(msg) = str_from_utf8(msg) {
                 error!("Message decode error, received `{}`", msg);
             } else {
                 error!("Message decode error, received message is not valid UTF-8");
@@ -91,9 +107,9 @@ fn decode_message(msg: &[u8], tx: &mut UartTx<'static, esp_hal::Async>) {
 fn handle_zone_transition(
     tx: &mut UartTx<'static, esp_hal::Async>,
     target_status: ZoneStatus,
+    last_known_status: &mut Option<ZoneStatus>,
 ) {
-    let current_status = get_zone_status();
-    if current_status == target_status {
+    if Some(target_status) == *last_known_status {
         info!("Zone already {}", target_status);
         if let Err(e) = send_ack(tx) {
             error!("Failed to send ACK: {}", e);
@@ -101,7 +117,7 @@ fn handle_zone_transition(
         return;
     }
 
-    set_zone_status(target_status);
+    *last_known_status = Some(target_status);
     ZONE_STATUS_SIGNAL.signal(target_status);
 
     info!("Transitioning to {}", target_status);
