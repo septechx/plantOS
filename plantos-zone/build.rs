@@ -15,7 +15,6 @@ fn main() {
         panic!("ZONE_ID must be 1-255");
     }
 
-    println!("cargo:rustc-env=ZONE_ID={}", zone_id);
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-env-changed=ZONE_ID");
 
@@ -28,7 +27,6 @@ fn main() {
         ),
     )
     .expect("Failed to write generated_zone_id.rs");
-    println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:warning=Building zone {}...", zone_id);
 }
 

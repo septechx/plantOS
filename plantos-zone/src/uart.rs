@@ -77,7 +77,7 @@ fn decode_message(
         Ok(msg) => {
             info!("Received message: `{}`", msg);
 
-            let current_zone_id = critical_section::with(|cs| zone_id_mutex.borrow_ref(cs).clone());
+            let current_zone_id = critical_section::with(|cs| *zone_id_mutex.borrow_ref(cs));
             if current_zone_id != Some(msg.id) && msg.id != ZoneId::MODULE {
                 return;
             }
