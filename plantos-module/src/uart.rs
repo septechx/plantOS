@@ -1,7 +1,7 @@
 use defmt::{Format, error, info};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::Channel;
-use embassy_time::{Duration, Timer};
+use embassy_time::{Duration, Timer, with_timeout};
 use esp_hal::peripherals;
 use esp_hal::uart::{Config, Uart, UartRx, UartTx};
 use plantos_zone_protocol::{Message, MessageKind, ZoneId};
@@ -104,24 +104,49 @@ async fn wait_for_ack(
     buf: &mut [u8; 32],
 ) -> Result<bool, SendError> {
     let deadline = embassy_time::Instant::now() + Duration::from_millis(ACK_TIMEOUT_MS);
+    let mut acc: heapless::Vec<u8, 256> = heapless::Vec::new();
 
     loop {
         if embassy_time::Instant::now() >= deadline {
             return Err(SendError::Timeout);
         }
 
-        match rx.read_async(buf).await {
-            Ok(n) if n > 0 => {
-                if let Ok(msg) = serde_json::from_slice::<Message>(&buf[..n]) {
-                    return Ok(msg.kind == MessageKind::Ack);
-                } else {
-                    return Ok(false);
+        let time_remaining = deadline - embassy_time::Instant::now();
+        match with_timeout(time_remaining, rx.read_async(buf)).await {
+            Ok(Ok(n)) if n > 0 => {
+                if acc.extend_from_slice(&buf[..n]).is_err() {
+                    error!("Accumulator buffer overflow");
+                    acc.clear();
+                    continue;
+                }
+
+                while let Some(newline_idx) = acc.iter().position(|&b| b == b'\n') {
+                    let line = &acc[..newline_idx];
+                    let line_str = match core::str::from_utf8(line) {
+                        Ok(s) => s,
+                        Err(_) => {
+                            let remaining = acc.len() - (newline_idx + 1);
+                            acc.copy_within(newline_idx + 1.., 0);
+                            let _ = acc.truncate(remaining);
+                            continue;
+                        }
+                    };
+
+                    if let Ok(msg) = serde_json::from_str::<Message>(line_str) {
+                        return Ok(msg.kind == MessageKind::Ack);
+                    }
+                    let remaining = acc.len() - (newline_idx + 1);
+                    acc.copy_within(newline_idx + 1.., 0);
+                    let _ = acc.truncate(remaining);
                 }
             }
-            Ok(_) => {}
-            Err(e) => {
+            Ok(Ok(_)) => {}
+            Ok(Err(e)) => {
                 error!("RX error: {}", e);
                 return Err(SendError::RxError);
+            }
+            Err(_) => {
+                return Err(SendError::Timeout);
             }
         }
     }
