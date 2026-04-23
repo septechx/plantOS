@@ -1,0 +1,6 @@
+run:
+  #!/usr/bin/env bash
+  set -a
+  source ./env.sh
+  set +a
+  cargo run --release

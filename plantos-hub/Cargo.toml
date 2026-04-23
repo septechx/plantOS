@@ -1,0 +1,89 @@
+[package]
+edition      = "2024"
+name         = "plantos-hub"
+rust-version = "1.88"
+version      = "0.1.0"
+
+[[bin]]
+name = "plantos-hub"
+path = "./src/main.rs"
+
+[dependencies]
+esp-hal = { version = "~1.1.0-rc.0", features = ["defmt", "esp32s3", "unstable"] }
+
+esp-rtos = { version = "0.3.0", features = [
+  "defmt",
+  "embassy",
+  "esp-alloc",
+  "esp-radio",
+  "esp32s3",
+] }
+
+defmt                  = "1.0.1"
+esp-bootloader-esp-idf = { version = "0.5.0", features = ["defmt", "esp32s3"] }
+
+embassy-net = { version = "0.9.1", features = [
+  "defmt",
+  "dhcpv4",
+  "medium-ethernet",
+  "tcp",
+  "udp",
+] }
+embedded-io = { version = "0.7.1", features = ["defmt"] }
+embedded-io-async = { version = "0.7.0", features = ["defmt"] }
+esp-alloc = { version = "0.10.0", features = ["defmt"] }
+esp-backtrace = { version = "0.19.0", features = [
+  "defmt",
+  "esp32s3",
+  "panic-handler",
+] }
+esp-println = { version = "0.17.0", features = ["defmt-espflash", "esp32s3"] }
+# for more networking protocol support see https://crates.io/crates/edge-net
+embassy-executor = { version = "0.10.0", features = ["defmt"] }
+embassy-time = { version = "0.5.0", features = ["defmt"] }
+esp-radio = { version = "0.18.0", features = [
+  "defmt",
+  "esp-alloc",
+  "esp32s3",
+  "unstable",
+  "wifi",
+] }
+smoltcp = { version = "0.13.0", default-features = false, features = [
+  "defmt",
+  "medium-ethernet",
+  "multicast",
+  "proto-dhcpv4",
+  "proto-dns",
+  "proto-ipv4",
+  "socket-dns",
+  "socket-icmp",
+  "socket-raw",
+  "socket-tcp",
+  "socket-udp",
+] }
+
+critical-section = "1.2.0"
+static_cell      = "2.1.1"
+heapless = { version = "0.9.2", features = ["defmt"] }
+plantos-lora-protocol = { path = "../plantos-lora-protocol/" }
+serde = { version = "1.0.228", features = ["derive"], default-features = false }
+serde_json = { version = "1.0.149", features = ["alloc"], default-features = false }
+aes-gcm = { version = "0.10.3", default-features = false, features = ["aes", "heapless"] }
+embassy-embedded-hal = "0.6.0"
+embassy-sync = "0.8.0"
+lora-phy = "3.0.1"
+
+
+[profile.dev]
+# Rust debug is too slow.
+# For debug builds always builds with some optimization
+opt-level = "s"
+
+[profile.release]
+codegen-units    = 1     # LLVM can perform better optimizations using a single thread
+debug            = 2
+debug-assertions = false
+incremental      = false
+lto              = 'fat'
+opt-level        = 's'
+overflow-checks  = false

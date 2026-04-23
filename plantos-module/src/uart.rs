@@ -56,6 +56,7 @@ pub async fn uart_sender(
     }
 }
 
+#[allow(clippy::large_stack_frames)]
 async fn send_with_retry(
     tx: &mut UartTx<'static, esp_hal::Async>,
     rx: &mut UartRx<'static, esp_hal::Async>,
@@ -99,6 +100,7 @@ async fn send_with_retry(
     Err(SendError::MaxRetriesExceeded)
 }
 
+#[allow(clippy::large_stack_frames)]
 async fn wait_for_ack(
     rx: &mut UartRx<'static, esp_hal::Async>,
     buf: &mut [u8; 32],
@@ -127,7 +129,7 @@ async fn wait_for_ack(
                         Err(_) => {
                             let remaining = acc.len() - (newline_idx + 1);
                             acc.copy_within(newline_idx + 1.., 0);
-                            let _ = acc.truncate(remaining);
+                            acc.truncate(remaining);
                             continue;
                         }
                     };
@@ -137,7 +139,7 @@ async fn wait_for_ack(
                     }
                     let remaining = acc.len() - (newline_idx + 1);
                     acc.copy_within(newline_idx + 1.., 0);
-                    let _ = acc.truncate(remaining);
+                    acc.truncate(remaining);
                 }
             }
             Ok(Ok(_)) => {}
