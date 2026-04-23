@@ -46,6 +46,8 @@ pub enum Method {
 pub enum ContentType {
     Plain,
     Json,
+    Html,
+    Js,
 }
 
 impl ContentType {
@@ -53,6 +55,8 @@ impl ContentType {
         match self {
             ContentType::Plain => "text/plain",
             ContentType::Json => "application/json",
+            ContentType::Html => "text/html",
+            ContentType::Js => "text/javascript",
         }
     }
 }
@@ -90,6 +94,11 @@ impl Response {
 
     pub fn status(mut self, code: StatusCode) -> Self {
         self.status_code = code;
+        self
+    }
+
+    pub fn content_type(mut self, ctype: ContentType) -> Self {
+        self.content_type = ctype;
         self
     }
 

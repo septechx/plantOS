@@ -1,0 +1,28 @@
+<html>
+  <head>
+    <title>PlantOS</title>
+  </head>
+  <body>
+    <h1>PlantOS</h1>
+
+    <h2>Zone 1</h2>
+
+    <label for="size">Size in m2</label>
+    <input type="number" id="size" />
+
+    <label for="water">Required water in L/day</label>
+    <input type="number" id="water" />
+
+    <button>Update</button>
+
+    <button id="manual">Manual Water</button>
+
+    <script>
+      const manual = document.querySelector("#manual");
+
+      manual.addEventListener("click", () => {
+        fetch("/api");
+      });
+    </script>
+  </body>
+</html>

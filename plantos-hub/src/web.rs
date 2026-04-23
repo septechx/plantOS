@@ -5,7 +5,7 @@ use embassy_net::{IpListenEndpoint, Stack};
 use embassy_time::{Duration, Timer};
 use embedded_io_async::Write;
 
-use crate::router::{Method, Request, Response, Router};
+use crate::router::{ContentType, Method, Request, Response, Router};
 
 const PORT: u16 = 80;
 
@@ -76,12 +76,13 @@ async fn read_http_request(socket: &mut TcpSocket<'_>) -> Option<Request> {
     }
 }
 
-fn handle_home(request: &Request) -> Response {
-    Response::text("Hello world!")
+fn handle_home(_request: &Request) -> Response {
+    Response::text(include_str!("index.html")).content_type(ContentType::Html)
 }
 
-fn handle_api(request: &Request) -> Response {
-    Response::json(r#"{"test":"other"}"#)
+fn handle_api(_request: &Request) -> Response {
+    info!("recieved API request");
+    Response::text("")
 }
 
 #[embassy_executor::task]
