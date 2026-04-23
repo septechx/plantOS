@@ -42,8 +42,10 @@ embedded-hal-bus = "0.3"
 heapless = "0.8"
 
 plantos-zone-protocol = { path = "../plantos-zone-protocol/" }
+plantos-lora-protocol = { path = "../plantos-lora-protocol/" }
 lora-phy = "3.0.1"
 embassy-embedded-hal = { version = "0.6.0", features = ["defmt"] }
+aes-gcm = { version = "0.10.3", default-features = false, features = ["aes", "heapless"] }
 
 
 [profile.dev]
