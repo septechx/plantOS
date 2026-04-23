@@ -24,6 +24,7 @@ const KEY: &[u8; 32] = &[
 ];
 
 const LORA_FREQUENCY: u32 = 868_000_000; // 868Mhz (EU868 863~870)
+const MAX_PLAINTEXT: usize = 244; // 256 RX buf - 12 nonce
 static SPI_BUS: StaticCell<Mutex<CriticalSectionRawMutex, Spi<'static, Async>>> = StaticCell::new();
 
 pub type LoRaInstance = LoRa<
@@ -131,12 +132,12 @@ pub fn decrypt_message(
     key_bytes: &[u8; 32],
     nonce_bytes: &[u8; 12],
     ciphertext: &[u8],
-) -> Result<Vec<u8, 128>, aes_gcm::Error> {
+) -> Result<Vec<u8, MAX_PLAINTEXT>, aes_gcm::Error> {
     let key = Key::<Aes256Gcm>::from_slice(key_bytes);
     let cipher = Aes256Gcm::new(key);
     let nonce = Nonce::from_slice(nonce_bytes);
 
-    let mut buffer: Vec<u8, 128> = Vec::new();
+    let mut buffer: Vec<u8, MAX_PLAINTEXT> = Vec::new();
     buffer
         .extend_from_slice(ciphertext)
         .map_err(|_| aes_gcm::Error)?;
