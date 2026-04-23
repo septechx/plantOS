@@ -87,8 +87,8 @@ pub async fn lora_listener(mut lora: LoRaInstance) {
         buf = [0u8; 256];
         match lora.rx(&rx_packet_params, &mut buf).await {
             Ok((received_len, _rx_pkt_status)) => {
-                let recieved_msg = &buf[..received_len as usize];
-                let (nonce, message) = match parse_packet(recieved_msg) {
+                let received_msg = &buf[..received_len as usize];
+                let (nonce, message) = match parse_packet(received_msg) {
                     Some(p) => p,
                     None => {
                         info!("Invalid packet");
@@ -102,12 +102,17 @@ pub async fn lora_listener(mut lora: LoRaInstance) {
                         continue;
                     }
                 };
-                info!("Recieved packet: {}", plaintext.as_slice());
-                let packet: Packet =
-                    serde_json::from_slice(&plaintext).expect("Failed to parse packet");
+                info!("Received packet: {}", plaintext.as_slice());
+                let packet: Packet = match serde_json::from_slice(&plaintext) {
+                    Ok(p) => p,
+                    Err(_) => {
+                        info!("Failed to parse packet");
+                        continue;
+                    }
+                };
 
                 // TODO: Dynamic module ids
-                if packet.to != LoRaId::module(1) || packet.from != LoRaId::MODULE {
+                if packet.to != crate::LORA_ID || packet.from != LoRaId::HUB {
                     continue;
                 }
 
@@ -141,7 +146,8 @@ pub fn decrypt_message(
 }
 
 fn parse_packet(packet: &[u8]) -> Option<(&[u8; 12], &[u8])> {
-    if packet.len() < 12 {
+    // 12-byte nonce + 16-byte GCM tag
+    if packet.len() < 28 {
         return None;
     }
 
@@ -188,7 +194,8 @@ pub async fn init_lora(
         rx_boost: true,
     };
 
-    let iv = GenericSx126xInterfaceVariant::new(reset, dio1, busy, None, None).unwrap();
+    let iv = GenericSx126xInterfaceVariant::new(reset, dio1, busy, None, None)
+        .expect("sx126x IV init failed");
 
     LoRa::new(
         Sx126x::new(spi_dev, iv, sx126x_config),

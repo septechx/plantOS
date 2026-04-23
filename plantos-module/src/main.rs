@@ -15,14 +15,14 @@ use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_hal::clock::CpuClock;
 use esp_hal::timer::timg::TimerGroup;
-use plantos_zone_protocol::ZoneId;
+use plantos_lora_protocol::LoRaId;
 use {esp_backtrace as _, esp_println as _};
 
 extern crate alloc;
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
-const ZONE_ID: u8 = 1;
+pub const LORA_ID: LoRaId = LoRaId::module(1);
 
 #[allow(
     clippy::large_stack_frames,
@@ -40,12 +40,11 @@ async fn main(spawner: Spawner) -> ! {
 
     info!("Embassy initialized!");
 
-    let zone_id = ZoneId::zone(ZONE_ID);
-    info!("Zone ID set to {}", ZONE_ID);
+    info!("LoRa ID set to {}", LORA_ID);
 
     let (rx, tx) = uart::init_uart(peripherals.UART1, peripherals.GPIO47, peripherals.GPIO48);
     spawner
-        .spawn(uart::uart_sender(tx, rx, zone_id))
+        .spawn(uart::uart_sender(tx, rx))
         .expect("Failed to spawn UART sender");
 
     let lora = lora::init_lora(
@@ -64,9 +63,6 @@ async fn main(spawner: Spawner) -> ! {
         .expect("Failed to spawn LoRa listener");
 
     loop {
-        uart::signal_open();
-        Timer::after(Duration::from_secs(5)).await;
-        uart::signal_close();
-        Timer::after(Duration::from_secs(5)).await;
+        Timer::after(Duration::from_secs(10)).await;
     }
 }

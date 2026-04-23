@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 pub struct LoRaId(u8);
 
 impl LoRaId {
-    pub const MODULE: LoRaId = LoRaId(0);
+    pub const HUB: LoRaId = LoRaId(0);
 
     #[inline]
     pub const fn module(id: u8) -> Self {

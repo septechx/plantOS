@@ -22,9 +22,11 @@ static COMMAND_CHANNEL: Channel<CriticalSectionRawMutex, ZoneCommand, 8> = Chann
 pub async fn uart_sender(
     mut tx: UartTx<'static, esp_hal::Async>,
     mut rx: UartRx<'static, esp_hal::Async>,
-    zone_id: ZoneId,
 ) {
     let mut buf = [0u8; 32];
+
+    // TODO: Support more zones
+    let zone_id = ZoneId::zone(1);
 
     loop {
         match COMMAND_CHANNEL.receive().await {
@@ -61,13 +63,12 @@ async fn send_with_retry(
     kind: MessageKind,
     rx_buf: &mut [u8; 32],
 ) -> Result<(), SendError> {
-    let mut attempt = 0;
+    let msg = Message { id: zone_id, kind };
+    let payload = serde_json::to_string(&msg).expect("Message serializes");
 
+    let mut attempt = 0;
     while attempt < MAX_RETRIES {
         attempt += 1;
-
-        let msg = Message { id: zone_id, kind };
-        let payload = serde_json::to_string(&msg).expect("Message serializes");
 
         if let Err(e) = tx.write(payload.as_bytes()) {
             error!("TX error: {}", e);
@@ -148,9 +149,13 @@ pub fn init_uart<'a>(
 }
 
 pub fn signal_open() {
-    COMMAND_CHANNEL.try_send(ZoneCommand::Open).ok();
+    if COMMAND_CHANNEL.try_send(ZoneCommand::Open).is_err() {
+        error!("Command channel full; dropping Open");
+    }
 }
 
 pub fn signal_close() {
-    COMMAND_CHANNEL.try_send(ZoneCommand::Close).ok();
+    if COMMAND_CHANNEL.try_send(ZoneCommand::Close).is_err() {
+        error!("Command channel full; dropping Close");
+    }
 }
