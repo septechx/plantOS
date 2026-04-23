@@ -8,6 +8,7 @@
 #![feature(const_trait_impl)]
 #![feature(const_option_ops)]
 
+mod router;
 mod web;
 mod wifi;
 

@@ -1586,6 +1586,7 @@ dependencies = [
  "esp-println",
  "esp-radio",
  "esp-rtos",
+ "heapless 0.9.2",
  "smoltcp",
  "static_cell",
 ]
