@@ -4,7 +4,9 @@ use embassy_net::tcp::TcpSocket;
 use embassy_net::{IpListenEndpoint, Stack};
 use embassy_time::{Duration, Timer};
 use embedded_io_async::Write;
+use plantos_lora_protocol::{LoRaId, PacketKind};
 
+use crate::lora::signal_send;
 use crate::router::{ContentType, Method, Request, Response, Router};
 
 const PORT: u16 = 80;
@@ -82,6 +84,7 @@ fn handle_home(_request: &Request) -> Response {
 
 fn handle_api(_request: &Request) -> Response {
     info!("recieved API request");
+    signal_send(LoRaId::module(1), PacketKind::Open);
     Response::text("")
 }
 

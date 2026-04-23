@@ -8,6 +8,7 @@
 #![feature(const_trait_impl)]
 #![feature(const_option_ops)]
 
+mod lora;
 mod router;
 mod web;
 mod wifi;
@@ -16,7 +17,7 @@ use defmt::info;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_hal::timer::timg::TimerGroup;
-use esp_hal::{clock::CpuClock, interrupt::software::SoftwareInterruptControl};
+use esp_hal::{clock::CpuClock, interrupt::software::SoftwareInterruptControl, rng::Rng};
 use {esp_backtrace as _, esp_println as _};
 
 extern crate alloc;
@@ -47,6 +48,24 @@ async fn main(spawner: Spawner) -> ! {
     let stack = wifi::init_wifi(&spawner, peripherals.WIFI).await;
 
     spawner.spawn(web::web_server(stack).unwrap());
+
+    let lora = lora::init_lora(
+        peripherals.SPI2,
+        peripherals.GPIO8,
+        peripherals.GPIO9,
+        peripherals.GPIO10,
+        peripherals.GPIO11,
+        peripherals.GPIO12,
+        peripherals.GPIO13,
+        peripherals.GPIO14,
+    )
+    .await;
+
+    let rng = Rng::new();
+    {
+        let token = lora::lora_sender(lora, rng);
+        spawner.spawn(token.unwrap());
+    }
 
     loop {
         Timer::after(Duration::from_secs(10)).await;

@@ -65,6 +65,13 @@ smoltcp = { version = "0.13.0", default-features = false, features = [
 critical-section = "1.2.0"
 static_cell      = "2.1.1"
 heapless = { version = "0.9.2", features = ["defmt"] }
+plantos-lora-protocol = { path = "../plantos-lora-protocol/" }
+serde = { version = "1.0.228", features = ["derive"], default-features = false }
+serde_json = { version = "1.0.149", features = ["alloc"], default-features = false }
+aes-gcm = { version = "0.10.3", default-features = false, features = ["aes", "heapless"] }
+embassy-embedded-hal = "0.6.0"
+embassy-sync = "0.8.0"
+lora-phy = "3.0.1"
 
 
 [profile.dev]
