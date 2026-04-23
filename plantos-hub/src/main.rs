@@ -5,7 +5,6 @@
     reason = "mem::forget is generally not safe to do with esp_hal types, especially those \
     holding buffers for the duration of a data transfer."
 )]
-#![deny(clippy::large_stack_frames)]
 #![feature(const_trait_impl)]
 #![feature(const_option_ops)]
 

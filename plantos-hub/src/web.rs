@@ -6,7 +6,6 @@ use embedded_io_async::Write;
 
 const PORT: u16 = 80;
 
-#[allow(clippy::large_stack_frames)]
 #[embassy_executor::task]
 pub async fn web_server(stack: Stack<'static>) {
     let mut rx_buf = [0u8; 2056];
@@ -39,6 +38,7 @@ pub async fn web_server(stack: Stack<'static>) {
                 Ok(len) => {
                     let received = str::from_utf8(&buf[..(pos + len)]).expect("Invalid UTF8");
 
+                    // Headers
                     if received.contains("\r\n\r\n") {
                         info!("{}", received);
                         break;

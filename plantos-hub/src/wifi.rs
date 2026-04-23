@@ -14,7 +14,6 @@ static STACK_RESOURCES: StaticCell<StackResources<3>> = StaticCell::new();
 const SSID: &str = option_env!("SSID").unwrap_or("TEST_SSID");
 const PASSWORD: &str = option_env!("PASSWORD").unwrap_or("TEST_PWD");
 
-#[allow(clippy::large_stack_frames)]
 pub async fn init_wifi(
     spawner: &Spawner,
     wifi_controller: peripherals::WIFI<'static>,
@@ -69,7 +68,6 @@ pub async fn init_wifi(
     stack
 }
 
-#[allow(clippy::large_stack_frames)]
 #[embassy_executor::task]
 async fn connection(mut controller: WifiController<'static>) {
     info!("start connection task");
