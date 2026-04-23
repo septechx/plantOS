@@ -21,6 +21,7 @@ impl ZoneId {
     /// Used for messages sent to the module or broadcasts from the module
     pub const MODULE: Self = Self(0);
 
+    #[inline]
     pub const fn zone(id: u8) -> Self {
         if id == 0 {
             // It is better to let the zone panic rather than sending invalid messages
