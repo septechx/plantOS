@@ -46,6 +46,18 @@ async fn main(spawner: Spawner) -> ! {
 
     info!("Embassy initialized!");
 
+    let disp = display::init_display(
+        peripherals.SPI3,
+        peripherals.GPIO26,
+        peripherals.GPIO48,
+        peripherals.GPIO47,
+        peripherals.GPIO33,
+        peripherals.GPIO6,
+    )
+    .await;
+
+    spawner.spawn(display::display_task(disp).unwrap());
+
     let stack = wifi::init_wifi(&spawner, peripherals.WIFI).await;
 
     spawner.spawn(web::web_server(stack).unwrap());
@@ -67,15 +79,6 @@ async fn main(spawner: Spawner) -> ! {
         let token = lora::lora_sender(lora, rng);
         spawner.spawn(token.unwrap());
     }
-
-    display::init_display(
-        peripherals.SPI3,
-        peripherals.GPIO26,
-        peripherals.GPIO48,
-        peripherals.GPIO47,
-        peripherals.GPIO33,
-        peripherals.GPIO6,
-    );
 
     loop {
         Timer::after(Duration::from_secs(10)).await;
