@@ -72,6 +72,8 @@ aes-gcm = { version = "0.10.3", default-features = false, features = ["aes", "he
 embassy-embedded-hal = "0.6.0"
 embassy-sync = "0.8.0"
 lora-phy = "3.0.1"
+embedded-graphics = { version = "0.8.2", features = ["defmt"] }
+ssd1309 = "0.4.0"
 
 
 [profile.dev]
