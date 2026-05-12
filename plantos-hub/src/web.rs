@@ -82,9 +82,15 @@ fn handle_home(_request: &Request) -> Response {
     Response::text(include_str!("index.html")).content_type(ContentType::Html)
 }
 
-fn handle_api(_request: &Request) -> Response {
-    info!("recieved API request");
+fn handle_open(_request: &Request) -> Response {
+    info!("recieved API request: open");
     signal_send(LoRaId::module(1), PacketKind::Open);
+    Response::text("")
+}
+
+fn handle_close(_request: &Request) -> Response {
+    info!("recieved API request: close");
+    signal_send(LoRaId::module(1), PacketKind::Close);
     Response::text("")
 }
 
