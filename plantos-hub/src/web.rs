@@ -98,7 +98,8 @@ fn handle_close(_request: &Request) -> Response {
 pub async fn web_server(stack: Stack<'static>) {
     let router = Router::new([
         ("/", Method::Get, handle_home),
-        ("/api", Method::Get, handle_api),
+        ("/open", Method::Get, handle_open),
+        ("/close", Method::Get, handle_close),
     ]);
 
     let mut rx_buf = [0u8; 2056];
