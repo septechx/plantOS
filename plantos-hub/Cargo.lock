@@ -1722,6 +1722,7 @@ dependencies = [
  "heapless 0.9.2",
  "lora-phy",
  "plantos-lora-protocol",
+ "plantos-zone-protocol",
  "serde",
  "serde_json",
  "smoltcp",

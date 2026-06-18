@@ -5,6 +5,7 @@ use embassy_net::{IpListenEndpoint, Stack};
 use embassy_time::{Duration, Timer};
 use embedded_io_async::Write;
 use plantos_lora_protocol::{LoRaId, PacketKind};
+use plantos_zone_protocol::ZoneId;
 
 use crate::lora::signal_send;
 use crate::router::{ContentType, Method, Request, Response, Router};
@@ -84,13 +85,13 @@ fn handle_home(_request: &Request) -> Response {
 
 fn handle_open(_request: &Request) -> Response {
     info!("recieved API request: open");
-    signal_send(LoRaId::module(1), PacketKind::Open);
+    signal_send(LoRaId::module(1), PacketKind::Open(ZoneId(1)));
     Response::text("")
 }
 
 fn handle_close(_request: &Request) -> Response {
     info!("recieved API request: close");
-    signal_send(LoRaId::module(1), PacketKind::Close);
+    signal_send(LoRaId::module(1), PacketKind::Close(ZoneId(1)));
     Response::text("")
 }
 
