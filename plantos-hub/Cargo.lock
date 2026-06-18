@@ -1733,6 +1733,15 @@ name = "plantos-lora-protocol"
 version = "0.1.0"
 dependencies = [
  "defmt 1.0.1",
+ "plantos-zone-protocol",
+ "serde",
+]
+
+[[package]]
+name = "plantos-zone-protocol"
+version = "0.1.0"
+dependencies = [
+ "defmt 1.0.1",
  "serde",
 ]
 

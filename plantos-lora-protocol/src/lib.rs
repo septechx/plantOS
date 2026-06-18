@@ -1,6 +1,7 @@
 #![no_std]
 
 use defmt::Format;
+use plantos_zone_protocol::ZoneId;
 use serde::{Deserialize, Serialize};
 
 #[derive(
@@ -30,6 +31,6 @@ pub struct Packet {
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Serialize, Deserialize, Format)]
 pub enum PacketKind {
-    Open,
-    Close,
+    Open(ZoneId),
+    Close(ZoneId),
 }
